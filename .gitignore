@@ -1,0 +1,38 @@
+# Android Studio
+.gradle/
+.idea/
+.kotlin/
+local.properties
+*.iml
+
+# Build
+build/
+app/build/
+*.apk
+*.aab
+
+# Secret files
+.env
+.env.*
+!.env.example
+*.jks
+*.keystore
+*.p12
+*.pem
+
+# Other
+.DS_Store
+captures/
+*.log
+
+# Kotlin cache
+.kotlin/
+
+# Secrets and signing keys
+.env
+.env.*
+!.env.example
+*.jks
+*.keystore
+*.p12
+*.pem

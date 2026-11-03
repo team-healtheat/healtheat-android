@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>헬싯(Healtheat) - AI 개인 맞춤형 식단 관리</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        sage: {
+                            50: '#f4f7f4',
+                            100: '#e3ebe3',
+                            200: '#c9d9c9',
+                            300: '#a3be9e',
+                            400: '#7b9f75',
+                            500: '#5a8254',
+                            600: '#466841',
+                            700: '#385334',
+                            800: '#2f432c',
+                            900: '#273825',
+                        },
+                        cream: {
+                            50: '#faf9f5',
+                            100: '#f4f1e8',
+                            200: '#e8e2d2',
+                        },
+                        softorange: {
+                            50: '#fff7ed',
+                            100: '#ffedd5',
+                            500: '#f97316',
+                            600: '#ea580c',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- React 18 & ReactDOM CDN -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <!-- Babel standalone for JSX in browser -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Pretendard Font -->
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+    <style>
+        body {
+            font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 flex items-center justify-center min-h-screen p-0 sm:p-4">
+
+<!-- App Mobile Shell Container -->
+<div id="root" class="w-full max-w-md h-[100vh] sm:h-[844px] bg-cream-50 sm:rounded-[40px] shadow-2xl flex flex-col overflow-hidden relative border-0 sm:border-[8px] border-slate-800"></div>
+
+<!-- React Application Script -->
+<script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    // --- Inline Pure SVG Icon Component ---
+    const Icon = ({ name, className = "w-5 h-5", color = "currentColor" }) => {
+        const icons = {
+            home: <><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></>,
+            calendar: <><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></>,
+            message: <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>,
+            user: <><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></>,
+            refresh: <><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></>,
+            check: <polyline points="20 6 9 17 4 12"/>,
+            checkCircle: <><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></>,
+            utensils: <><path d="M18 2v20"/><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/><path d="M12 2v8a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V2"/><path d="M8 2v20"/></>,
+            chef: <><path d="M6 13.8a4.5 4.5 0 1 1 2.61-8.39 4.5 4.5 0 0 1 6.78 0 4.5 4.5 0 1 1 2.61 8.39"/><path d="M6 14h12v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-7z"/></>,
+            sparkles: <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3z"/>,
+            alert: <><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></>,
+            plus: <><line x1="12" x2="12" y1="5" y2="19"/><line x1="5" x2="19" y1="12" y2="12"/></>,
+            back: <><line x1="19" x2="5" y1="12" y2="12"/><polyline points="12 19 5 12 12 5"/></>,
+            chevronRight: <polyline points="9 18 15 12 9 6"/>,
+            info: <><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="16" y2="12"/><line x1="12" x2="12.01" y1="8" y2="8"/></>,
+            shield: <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>,
+            close: <><line x1="18" x2="6" y1="6" y2="18"/><line x1="6" x2="18" y1="6" y2="18"/></>,
+            edit: <><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></>,
+            clock: <><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></>,
+            send: <><line x1="22" x2="11" y1="2" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></>,
+            store: <><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20v5a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2V7"/></>
+        };
+
+        return (
+            <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke={color} 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                className={className}
+            >
+                {icons[name] || icons.info}
+            </svg>
+        );
+    };
+
+    // --- Toast Notification Component ---
+    const Toast = ({ message, onClose }) => {
+        useEffect(() => {
+            const timer = setTimeout(onClose, 3000);
+            return () => clearTimeout(timer);
+        }, [onClose]);
+
+        return (
+            <div className="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 w-11/12 max-w-xs bg-slate-800 text-white text-xs py-2.5 px-4 rounded-full shadow-lg flex items-center justify-between animate-bounce">
+                <span className="flex items-center gap-2">
+                    <Icon name="checkCircle" className="w-4 h-4 text-emerald-400" />
+                    {message}
+                </span>
+                <button onClick={onClose} className="text-slate-400 hover:text-white">
+                    <Icon name="close" className="w-3.5 h-3.5" />
+                </button>
+            </div>
+        );
+    };
+
+    // --- Main App Prototype Component ---
+    function App() {
+        // --- Navigation State ---
+        const [currentTab, setCurrentTab] = useState('home'); // 'home' | 'records' | 'chat' | 'mypage' | 'onboarding' | 'auth'
+        const [toastMessage, setToastMessage] = useState(null);
+
+        // --- User Profile State (PostgreSQL Mock) ---
+        const [userProfile, setUserProfile] = useState({
+            email: 'user@healtheat.co.kr',
+            name: '김헬시',
+            age: 28,
+            gender: '여성',
+            allowDiningOut: true, // 배달/외식 허용 설정 (마이페이지 & 온보딩에서 변경)
+            healthFactors: [
+                { id: 1, name: 'LDL 콜레스테롤 관리', type: 'DISEASE', reportedStatus: '높음', isActive: true, code: 'LDL_HIGH' },
+                { id: 2, name: '통풍 주의', type: 'DISEASE', reportedStatus: '진단', isActive: true, code: 'GOUT' }
+            ],
+            allergies: ['복숭아', '갑각류'],
+            likedFoods: ['연어', '두부', '닭가슴살', '나물류'],
+            dislikedFoods: ['기름진 창자류', '너무 짠 탕류'],
+            dietaryStyle: '저염 · 저푸린 균형식'
+        });
+
+        // --- Meal Plan State ---
+        const [hasPlan, setHasPlan] = useState(false); // 비즈니스 규칙: 자동 생성 금지 (요청 시에만 생성)
+        const [isGenerating, setIsGenerating] = useState(false);
+        const [selectedRecipeItem, setSelectedRecipeItem] = useState(null); // 레시피 모달용
+
+        const [meals, setMeals] = useState({
+            BREAKFAST: {
+                id: 101,
+                mealType: 'BREAKFAST',
+                sourceType: 'HOME_COOKED',
+                reason: '혈당 수치를 완만하게 올리고 포화지방을 최소화한 아침 식단입니다.',
+                items: [
+                    { id: 1, foodName: '통밀 호밀 토스트', foodRole: 'STAPLE', preparationType: 'PREPARE', servingDescription: '1장' },
+                    { id: 2, foodName: '삶은 계란', foodRole: 'MAIN', preparationType: 'COOK', servingDescription: '1개' },
+                    { id: 3, foodName: '계절 과일 (사과 슬라이스)', foodRole: 'SIDE', preparationType: 'READY_TO_EAT', servingDescription: '1/2개' }
+                ]
+            },
+            LUNCH: {
+                id: 102,
+                mealType: 'LUNCH',
+                sourceType: 'DINING_OUT', // 외식 1끼 허용 시
+                reason: '외식 메뉴로 나트륨을 적절히 조절할 수 있는 한식 비빔밥을 추천합니다.',
+                items: [
+                    { id: 4, foodName: '산채 나물 비빔밥', foodRole: 'MAIN', preparationType: 'READY_TO_EAT', servingDescription: '1그릇' },
+                    { id: 5, foodName: '맑은 콩나물국', foodRole: 'SOUP', preparationType: 'READY_TO_EAT', servingDescription: '1대접' }
+                ]
+            },
+            DINNER: {
+                id: 103,
+                mealType: 'DINNER',
+                sourceType: 'HOME_COOKED',
+                reason: '통풍 및 콜레스테롤 케어를 위해 퓨린이 적은 식이섬유 중심 저녁입니다.',
+                items: [
+                    { id: 6, foodName: '현미 잡곡밥', foodRole: 'STAPLE', preparationType: 'PREPARE', servingDescription: '2/3공기' },
+                    { id: 7, foodName: '클린 들깨 미역국', foodRole: 'SOUP', preparationType: 'COOK', servingDescription: '1대접' },
+                    { id: 8, foodName: '조기 구이', foodRole: 'MAIN', preparationType: 'COOK', servingDescription: '1마리' },
+                    { id: 9, foodName: '배추김치', foodRole: 'SIDE', preparationType: 'READY_TO_EAT', servingDescription: '적당량' }
+                ]
+            }
+        });
+
+        // --- Meal Record History State ---
+        const [mealRecords, setMealRecords] = useState([
+            { id: 1, date: '2026-11-02', mealType: 'BREAKFAST', foodName: '통밀 토스트, 삶은 계란, 사과', fromRecommendation: true },
+            { id: 2, date: '2026-11-01', mealType: 'LUNCH', foodName: '곱도리탕 1그릇 (직접 외식)', fromRecommendation: false }
+        ]);
+
+        const [showAddRecordModal, setShowAddRecordModal] = useState(false);
+        const [customMealInput, setCustomMealInput] = useState({ mealType: 'LUNCH', foodName: '' });
+
+        // --- AI Chatbot State ---
+        const [chatMessages, setChatMessages] = useState([
+            { id: 1, role: 'ai', content: '안녕하세요! 헬싯 AI 식습관 에이전트입니다. 오늘 식단 추천이나 궁금한 건강 정보를 편하게 물어보세요. 😊', time: '오전 09:00' }
+        ]);
+        const [chatInput, setChatInput] = useState('');
+        const [pendingAction, setPendingAction] = useState(null); // 건강 프로필 변경 승인 UI 구조
+
+        // --- Helper: Toast Alert Trigger ---
+        const showToast = (msg) => {
+            setToastMessage(msg);
+        };
+
+        // --- Action 1: 오늘의 식단 생성하기 (POST /api/meal-plans/generate) ---
+        const handleGenerateMealPlan = () => {
+            setIsGenerating(true);
+            setTimeout(() => {
+                setIsGenerating(false);
+                setHasPlan(true);
+                showToast('오늘의 맞춤 식단 3끼가 생성되었습니다!');
+            }, 1500);
+        };
+
+        // --- Action 2: 한 끼 재추천 (POST /api/meal-plans/{planId}/meals/{mealType}/regenerate) ---
+        const handleRegenerateSingleMeal = (mealType) => {
+            showToast(`${mealType === 'BREAKFAST' ? '아침' : mealType === 'LUNCH' ? '점심' : '저녁'} 식단을 다시 추천받는 중...`);
+            setTimeout(() => {
+                const newDinner = {
+                    id: 104,
+                    mealType: mealType,
+                    sourceType: 'HOME_COOKED',
+                    reason: '요청하신 선호도를 반영하여 연어 구이 중심의 고단백 저염 저녁으로 변경되었습니다.',
+                    items: [
+                        { id: 10, foodName: '귀리 잡곡밥', foodRole: 'STAPLE', preparationType: 'PREPARE', servingDescription: '1/2공기' },
+                        { id: 11, foodName: '연어 아스파라거스 구이', foodRole: 'MAIN', preparationType: 'COOK', servingDescription: '150g' },
+                        { id: 12, foodName: '두부 버섯 된장국', foodRole: 'SOUP', preparationType: 'COOK', servingDescription: '1대접' },
+                        { id: 13, foodName: '오이무침', foodRole: 'SIDE', preparationType: 'READY_TO_EAT', servingDescription: '소량' }
+                    ]
+                };
+                setMeals(prev => ({ ...prev, [mealType]: newDinner }));
+                showToast('해당 끼니가 새로운 추천 식단으로 새로고침되었습니다!');
+            }, 1200);
+        };
+
+        // --- Action 3: 추천 식단 먹었어요! (POST /api/meal-records/from-recommendation) ---
+        const handleEatRecommendation = (mealType) => {
+            const meal = meals[mealType];
+            const foodNames = meal.items.map(i => i.foodName).join(', ');
+            const newRecord = {
+                id: Date.now(),
+                date: '2026-11-02',
+                mealType: mealType,
+                foodName: foodNames,
+                fromRecommendation: true
+            };
+            setMealRecords(prev => [newRecord, ...prev]);
+            showToast(`오늘 ${mealType === 'BREAKFAST' ? '아침' : mealType === 'LUNCH' ? '점심' : '저녁'} 식사가 기록되었습니다!`);
+        };
+
+        // --- Action 4: 다른 음식 직접 기록 (POST /api/meal-records) ---
+        const handleSaveCustomRecord = () => {
+            if (!customMealInput.foodName.trim()) return;
+            const newRecord = {
+                id: Date.now(),
+                date: '2026-11-02',
+                mealType: customMealInput.mealType,
+                foodName: customMealInput.foodName,
+                fromRecommendation: false
+            };
+            setMealRecords(prev => [newRecord, ...prev]);
+            setCustomMealInput({ mealType: 'LUNCH', foodName: '' });
+            setShowAddRecordModal(false);
+            showToast('직접 섭취한 음식이 기록되었습니다.');
+        };
+
+        // --- Action 5: AI 챗봇 메시지 전송 및 의도 파악 ---
+        const handleSendMessage = (textToSend) => {
+            const query = textToSend || chatInput;
+            if (!query.trim()) return;
+
+            const userMsg = { id: Date.now(), role: 'user', content: query, time: '방금' };
+            setChatMessages(prev => [...prev, userMsg]);
+            if (!textToSend) setChatInput('');
+
+            // AI Response Simulation
+            setTimeout(() => {
+                if (query.includes('곱도리탕')) {
+                    const aiReply = {
+                        id: Date.now() + 1,
+                        role: 'ai',
+                        content: '최근 2주 간 식사 기록을 조회해 본 결과, 곱도리탕은 총 1회(11월 1일 점심) 기록되어 있습니다. 현재 콜레스테롤 관리 목표가 있으시므로 나트륨과 포화지방 함량이 높은 메뉴는 연속 섭취를 피해주시는 것을 권장합니다.',
+                        time: '방금'
+                    };
+                    setChatMessages(prev => [...prev, aiReply]);
+                } else if (query.includes('당뇨')) {
+                    const aiReply = {
+                        id: Date.now() + 1,
+                        role: 'ai',
+                        content: '당뇨 진단 관련 건강 정보를 프로필에 추가하시겠습니까? 승인하시면 이후 식단 생성 시 혈당 조절에 유리한 저당 식이 원칙이 반영됩니다.',
+                        time: '방금'
+                    };
+                    setChatMessages(prev => [...prev, aiReply]);
+                    setPendingAction({
+                        id: 501,
+                        type: 'ADD_HEALTH_FACTOR',
+                        factorName: '당뇨병 (혈당 관리)',
+                        text: '건강 프로필에 [당뇨병]을 추가할까요?'
+                    });
+                } else if (query.includes('고기') || query.includes('저녁 다시')) {
+                    handleRegenerateSingleMeal('DINNER');
+                    const aiReply = {
+                        id: Date.now() + 1,
+                        role: 'ai',
+                        content: '오늘 저녁 식단을 단백질이 풍부한 연어 구이 식단으로 재추천해 드렸어요! [홈] 탭에서 변경된 저녁 카드를 확인하실 수 있습니다.',
+                        time: '방금'
+                    };
+                    setChatMessages(prev => [...prev, aiReply]);
+                } else {
+                    const aiReply = {
+                        id: Date.now() + 1,
+                        role: 'ai',
+                        content: `"${query}"에 대한 질문을 확인했습니다. 헬싯은 헬시님의 ${userProfile.healthFactors.map(f => f.name).join(', ')} 요인을 종합 분석하여 가장 안전하고 맛있는 맞춤 식단을 제안합니다.`,
+                        time: '방금'
+                    };
+                    setChatMessages(prev => [...prev, aiReply]);
+                }
+            }, 1000);
+        };
+
+        // --- Action 6: Pending Action Confirm (POST /api/chat/actions/{actionId}/confirm) ---
+        const handleConfirmAction = () => {
+            if (!pendingAction) return;
+            setUserProfile(prev => ({
+                ...prev,
+                healthFactors: [
+                    ...prev.healthFactors,
+                    { id: Date.now(), name: pendingAction.factorName, type: 'DISEASE', reportedStatus: '진단', isActive: true, code: 'DIABETES' }
+                ]
+            }));
+            setPendingAction(null);
+            showToast('건강 프로필이 성공적으로 업데이트되었습니다.');
+            setChatMessages(prev => [
+                ...prev,
+                { id: Date.now(), role: 'ai', content: '✅ 변경이 승인되어 건강 프로필에 추가되었습니다. 다음 식단 추천부터 반영됩니다.', time: '방금' }
+            ]);
+        };
+
+        return (
+            <div className="w-full h-full flex flex-col bg-cream-50 text-slate-800 relative">
+                {/* Toast Notification */}
+                {toastMessage && <Toast message={toastMessage} onClose={() => setToastMessage(null)} />}
+
+                {/* Main Content Area */}
+                <div className="flex-1 overflow-y-auto no-scrollbar pb-20">
+                    {/* Header Bar */}
+                    <header className="sticky top-0 z-30 bg-cream-50/90 backdrop-blur-md px-5 py-3.5 border-b border-cream-200 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-xl bg-sage-600 flex items-center justify-center text-white font-bold text-sm shadow-md">
+                                H
+                            </div>
+                            <span className="font-bold text-lg tracking-tight text-sage-800">Healtheat</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <button 
+                                onClick={() => setCurrentTab('onboarding')} 
+                                className="text-xs bg-sage-100 text-sage-700 px-2.5 py-1.5 rounded-full font-medium hover:bg-sage-200 transition"
+                            >
+                                온보딩 다시보기
+                            </button>
+                        </div>
+                    </header>
+
+                    {/* VIEW 1: HOME (오늘의 맞춤 식단) */}
+                    {currentTab === 'home' && (
+                        <div className="px-5 py-4 space-y-5 animate-fadeIn">
+                            {/* Welcome Banner */}
+                            <div className="bg-gradient-to-br from-sage-600 to-sage-700 rounded-3xl p-5 text-white shadow-lg relative overflow-hidden">
+                                <div className="absolute -right-4 -bottom-4 w-28 h-28 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
+                                <div className="flex justify-between items-start mb-3">
+                                    <div>
+                                        <p className="text-sage-100 text-xs font-medium">2026년 11월 2일 (월)</p>
+                                        <h2 className="text-xl font-bold mt-0.5">{userProfile.name}님, 반가워요! 🌱</h2>
+                                    </div>
+                                    <span className="bg-white/20 backdrop-blur-md text-xs px-2.5 py-1 rounded-full font-medium">
+                                        Personalized
+                                    </span>
+                                </div>
+                                <p className="text-xs text-sage-100 leading-relaxed">
+                                    오늘의 건강 요인: <span className="font-semibold text-white">{userProfile.healthFactors.map(f => f.name).join(' · ')}</span>
+                                </p>
+                            </div>
+
+                            {/* 식단 생성 상태 처리 (비즈니스 규칙: 자동 생성 금지, 요청 시에만) */}
+                            {!hasPlan && !isGenerating && (
+                                <div className="bg-white rounded-3xl p-8 text-center border border-sage-100 shadow-sm space-y-4">
+                                    <div className="w-14 h-14 bg-sage-50 text-sage-600 rounded-2xl flex items-center justify-center mx-auto">
+                                        <Icon name="sparkles" className="w-7 h-7" />
+                                    </div>
+                                    <div>
+                                        <h3 className="font-bold text-slate-800 text-base">오늘의 맞춤 식단이 아직 없습니다</h3>
+                                        <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                                            건강 상태, 취향, 최근 식사 기록을 분석하여<br/>오늘의 세 끼 식단을 AI가 구성해 드립니다.
+                                        </p>
+                                    </div>
+                                    <button 
+                                        onClick={handleGenerateMealPlan}
+                                        className="w-full bg-sage-600 hover:bg-sage-700 text-white text-sm font-semibold py-3.5 px-4 rounded-2xl shadow-md transition transform active:scale-95 flex items-center justify-center gap-2"
+                                    >
+                                        <Icon name="sparkles" className="w-4 h-4" />
+                                        오늘의 맞춤 식단 생성하기
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* Generating Loading UI */}
+                            {isGenerating && (
+                                <div className="bg-white rounded-3xl p-10 text-center border border-sage-100 shadow-sm space-y-4 animate-pulse">
+                                    <div className="w-12 h-12 border-4 border-sage-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+                                    <p className="font-semibold text-slate-700 text-sm">AI가 {userProfile.name}님의 맞춤 하루 세 끼를 구성하고 있습니다...</p>
+                                    <p className="text-xs text-slate-400">질환 요인 검증 및 외식 비율 정책 적용 중</p>
+                                </div>
+                            )}
+
+                            {/* Generated Meal Cards (아침/점심/저녁) */}
+                            {hasPlan && !isGenerating && (
+                                <div className="space-y-4">
+                                    <div className="flex justify-between items-center px-1">
+                                        <h3 className="font-bold text-slate-800 text-base flex items-center gap-2">
+                                            <Icon name="utensils" className="w-4 h-4 text-sage-600" />
+                                            오늘의 AI 추천 식단
+                                        </h3>
+                                        <span className="text-xs text-slate-400">
+                                            외식 추천: {userProfile.allowDiningOut ? '허용 (최대 1끼)' : 'OFF'}
+                                        </span>
+                                    </div>
+
+                                    {/* 끼니 카드 컴포넌트 */}
+                                    {['BREAKFAST', 'LUNCH', 'DINNER'].map((type) => {
+                                        const meal = meals[type];
+                                        const typeLabel = type === 'BREAKFAST' ? '아침' : type === 'LUNCH' ? '점심' : '저녁';
+                                        const isDining = meal.sourceType === 'DINING_OUT';
+
+                                        return (
+                                            <div key={type} className="bg-white rounded-3xl p-5 border border-cream-200 shadow-sm space-y-3 relative">
+                                                {/* Meal Title & Badges */}
+                                                <div className="flex justify-between items-center">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="font-bold text-sm text-slate-800">{typeLabel}</span>
+                                                        <span className={`text-[10px] px-2 py-0.5 rounded-md font-medium ${isDining ? 'bg-softorange-50 text-softorange-600 border border-softorange-100' : 'bg-sage-50 text-sage-700 border border-sage-100'}`}>
+                                                            {isDining ? '외식 / 배달' : '집밥 조리'}
+                                                        </span>
+                                                    </div>
+                                                    <button 
+                                                        onClick={() => handleRegenerateSingleMeal(type)}
+                                                        className="text-xs text-slate-400 hover:text-sage-600 flex items-center gap-1 font-medium"
+                                                    >
+                                                        <Icon name="refresh" className="w-3.5 h-3.5" />
+                                                        이 끼니만 다시 추천
+                                                    </button>
+                                                </div>
+
+                                                {/* Recommended Foods Item List */}
+                                                <div className="bg-cream-50 rounded-2xl p-3.5 space-y-2">
+                                                    {meal.items.map((item) => (
+                                                        <div key={item.id} className="flex justify-between items-center text-xs">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="w-1.5 h-1.5 rounded-full bg-sage-500"></span>
+                                                                <span className="font-semibold text-slate-700">{item.foodName}</span>
+                                                            </div>
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="text-slate-400">{item.servingDescription}</span>
+                                                                <button 
+                                                                    onClick={() => setSelectedRecipeItem(item)}
+                                                                    className="text-[11px] text-sage-700 underline font-medium hover:text-sage-800"
+                                                                >
+                                                                    {isDining ? '가이드' : '레시피'}
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+
+                                                {/* Recommendation Reason */}
+                                                <p className="text-[11px] text-slate-500 bg-sage-50/50 p-2.5 rounded-xl border border-sage-100/50 leading-relaxed">
+                                                    💡 <span className="font-medium text-sage-800">추천 이유:</span> {meal.reason}
+                                                </p>
+
+                                                {/* Action Button: 추천 식단 먹었어요! */}
+                                                <button 
+                                                    onClick={() => handleEatRecommendation(type)}
+                                                    className="w-full bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold py-2.5 rounded-xl flex items-center justify-center gap-1.5 transition active:scale-95"
+                                                >
+                                                    <Icon name="check" className="w-3.5 h-3.5 text-emerald-400" />
+                                                    추천 식단 먹었어요!
+                                                </button>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* VIEW 2: MEAL RECORDS (식사 기록) */}
+                    {currentTab === 'records' && (
+                        <div className="px-5 py-4 space-y-5 animate-fadeIn">
+                            <div className="flex justify-between items-center">
+                                <div>
+                                    <h2 className="text-lg font-bold text-slate-800">식사 기록</h2>
+                                    <p className="text-xs text-slate-500">추천 식단과 실제 먹은 음식을 관리합니다</p>
+                                </div>
+                                <button 
+                                    onClick={() => setShowAddRecordModal(true)}
+                                    className="bg-sage-600 text-white text-xs font-medium px-3 py-2 rounded-xl flex items-center gap-1 shadow-sm"
+                                >
+                                    <Icon name="plus" className="w-3.5 h-3.5" />
+                                    다른 음식 기록
+                                </button>
+                            </div>
+
+                            {/* Calendar Day Picker Bar */}
+                            <div className="flex justify-between bg-white p-3 rounded-2xl border border-cream-200 text-center text-xs">
+                                {['10/30 (금)', '10/31 (토)', '11/01 (일)', '11/02 (오늘)'].map((day, idx) => (
+                                    <div key={day} className={`px-2.5 py-1.5 rounded-xl ${idx === 3 ? 'bg-sage-600 text-white font-bold' : 'text-slate-500'}`}>
+                                        {day}
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Records Timeline */}
+                            <div className="space-y-3">
+                                <h3 className="font-bold text-xs text-slate-400 uppercase tracking-wider">Today's Meals</h3>
+                                
+                                {['BREAKFAST', 'LUNCH', 'DINNER'].map((mType) => {
+                                    const record = mealRecords.find(r => r.mealType === mType);
+                                    const mLabel = mType === 'BREAKFAST' ? '아침' : mType === 'LUNCH' ? '점심' : '저녁';
+
+                                    return (
+                                        <div key={mType} className="bg-white p-4 rounded-2xl border border-cream-200 flex justify-between items-center">
+                                            <div className="space-y-1">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="font-bold text-xs text-slate-700">{mLabel}</span>
+                                                    {record ? (
+                                                        <span className={`text-[10px] px-2 py-0.5 rounded ${record.fromRecommendation ? 'bg-emerald-50 text-emerald-700' : 'bg-orange-50 text-orange-700'}`}>
+                                                            {record.fromRecommendation ? '추천 식단 이행' : '직접 입력'}
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-[10px] bg-slate-100 text-slate-400 px-2 py-0.5 rounded">
+                                                            미기록
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <p className="text-xs text-slate-600">
+                                                    {record ? record.foodName : '아직 식사 기록이 없습니다. (건너뛰기)'}
+                                                </p>
+                                            </div>
+                                            {!record && (
+                                                <button 
+                                                    onClick={() => handleEatRecommendation(mType)}
+                                                    className="text-xs bg-sage-50 text-sage-700 border border-sage-200 px-3 py-1.5 rounded-xl font-medium"
+                                                >
+                                                    간편 간편기록
+                                                </button>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+
+                            {/* Notice Banner for Unrecorded Meals */}
+                            <div className="p-3.5 bg-slate-100 rounded-2xl text-[11px] text-slate-500 leading-relaxed flex items-start gap-2">
+                                <Icon name="info" className="w-4 h-4 text-slate-400 flex-shrink-0 mt-0.5" />
+                                <span>
+                                    <strong>안내:</strong> 기록되지 않은 식사는 '미기록'으로 분류되며 굶은 것으로 간주하지 않습니다. 정확한 상담을 위해 실제 먹은 음식을 자유롭게 남겨주세요.
+                                </span>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* VIEW 3: AI CHATBOT (식습관 에이전트 & 변경 승인) */}
+                    {currentTab === 'chat' && (
+                        <div className="px-5 py-4 flex flex-col h-[680px] justify-between animate-fadeIn">
+                            {/* Chat Header */}
+                            <div className="border-b border-cream-200 pb-3 flex items-center gap-2">
+                                <div className="w-7 h-7 rounded-full bg-sage-600 flex items-center justify-center text-white text-xs font-bold">
+                                    AI
+                                </div>
+                                <div>
+                                    <h2 className="text-sm font-bold text-slate-800">Healtheat 식습관 AI</h2>
+                                    <p className="text-[10px] text-emerald-600 font-medium">● 실제 식사 이력 연동 중</p>
+                                </div>
+                            </div>
+
+                            {/* Message List Area */}
+                            <div className="flex-1 overflow-y-auto no-scrollbar py-3 space-y-3">
+                                {chatMessages.map((msg) => (
+                                    <div key={msg.id} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+                                        <div className={`max-w-[85%] rounded-2xl p-3.5 text-xs leading-relaxed ${
+                                            msg.role === 'user' 
+                                                ? 'bg-sage-600 text-white rounded-br-none' 
+                                                : 'bg-white text-slate-700 border border-cream-200 rounded-bl-none shadow-sm'
+                                        }`}>
+                                            {msg.content}
+                                        </div>
+                                        <span className="text-[9px] text-slate-400 mt-1 px-1">{msg.time}</span>
+                                    </div>
+                                ))}
+
+                                {/* PENDING ACTION APPROVAL UI (건강정보 변경 승인 구조) */}
+                                {pendingAction && (
+                                    <div className="bg-softorange-50 border border-softorange-100 p-4 rounded-2xl space-y-3 my-2 animate-bounce">
+                                        <div className="flex items-center gap-2 text-xs font-bold text-softorange-600">
+                                            <Icon name="alert" className="w-4 h-4" />
+                                            건강 프로필 변경 요청 승인
+                                        </div>
+                                        <p className="text-xs text-slate-700">{pendingAction.text}</p>
+                                        <div className="flex gap-2 pt-1">
+                                            <button 
+                                                onClick={() => setPendingAction(null)}
+                                                className="flex-1 bg-white border border-slate-200 text-slate-600 text-xs py-2 rounded-xl font-medium"
+                                            >
+                                                취소
+                                            </button>
+                                            <button 
+                                                onClick={handleConfirmAction}
+                                                className="flex-1 bg-softorange-500 hover:bg-softorange-600 text-white text-xs py-2 rounded-xl font-bold shadow-sm"
+                                            >
+                                                변경 승인
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Prompt Chips */}
+                            <div className="py-2 space-y-1.5">
+                                <p className="text-[10px] text-slate-400 font-medium">추천 질문 칩</p>
+                                <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-1">
+                                    {[
+                                        "최근 2주 동안 곱도리탕 몇 번 먹었어?",
+                                        "오늘 고기가 먹고 싶은데 저녁 다시 추천해 줘.",
+                                        "나 최근에 당뇨 진단받았어."
+                                    ].map((chip) => (
+                                        <button 
+                                            key={chip}
+                                            onClick={() => handleSendMessage(chip)}
+                                            className="text-[11px] bg-white border border-sage-200 text-sage-800 px-3 py-1.5 rounded-full whitespace-nowrap hover:bg-sage-50 transition flex-shrink-0"
+                                        >
+                                            {chip}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Chat Input Bar */}
+                            <div className="flex items-center gap-2 pt-1">
+                                <input 
+                                    type="text" 
+                                    value={chatInput}
+                                    onChange={(e) => setChatInput(e.target.value)}
+                                    onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+                                    placeholder="식사 이력 상담, 저녁 재추천, 질환 변경..."
+                                    className="flex-1 bg-white border border-cream-200 rounded-2xl px-4 py-3 text-xs focus:outline-none focus:border-sage-500"
+                                />
+                                <button 
+                                    onClick={() => handleSendMessage()}
+                                    className="bg-sage-600 text-white p-3 rounded-2xl shadow-sm hover:bg-sage-700 transition"
+                                >
+                                    <Icon name="send" className="w-4 h-4" />
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* VIEW 4: MY PAGE (마이페이지 및 설정) */}
+                    {currentTab === 'mypage' && (
+                        <div className="px-5 py-4 space-y-5 animate-fadeIn">
+                            <h2 className="text-lg font-bold text-slate-800">마이페이지</h2>
+
+                            {/* User Profile Info Card */}
+                            <div className="bg-white p-4 rounded-3xl border border-cream-200 flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-12 h-12 bg-sage-100 text-sage-700 font-bold text-lg rounded-2xl flex items-center justify-center">
+                                        {userProfile.name[0]}
+                                    </div>
+                                    <div>
+                                        <h3 className="font-bold text-sm text-slate-800">{userProfile.name} 님</h3>
+                                        <p className="text-xs text-slate-400">{userProfile.email} · {userProfile.age}세 ({userProfile.gender})</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Health Factors Management */}
+                            <div className="bg-white p-5 rounded-3xl border border-cream-200 space-y-3">
+                                <div className="flex justify-between items-center">
+                                    <h3 className="font-bold text-xs text-slate-700 flex items-center gap-1.5">
+                                        <Icon name="shield" className="w-4 h-4 text-sage-600" />
+                                        활성화된 건강 요인
+                                    </h3>
+                                    <span className="text-[10px] text-slate-400">AI 식단 생성 시 반영</span>
+                                </div>
+                                <div className="space-y-2">
+                                    {userProfile.healthFactors.map((factor) => (
+                                        <div key={factor.id} className="flex justify-between items-center bg-cream-50 p-3 rounded-2xl text-xs">
+                                            <div>
+                                                <span className="font-bold text-slate-800">{factor.name}</span>
+                                                <span className="text-slate-400 ml-2">({factor.reportedStatus})</span>
+                                            </div>
+                                            <span className="bg-emerald-100 text-emerald-800 text-[10px] px-2 py-0.5 rounded-full font-medium">
+                                                적용 중
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Dining Out Allowance Switch */}
+                            <div className="bg-white p-5 rounded-3xl border border-cream-200 flex justify-between items-center">
+                                <div>
+                                    <h3 className="font-bold text-xs text-slate-800">배달 / 외식 추천 허용</h3>
+                                    <p className="text-[11px] text-slate-400 mt-0.5">허용 시 하루 최대 1끼에 한해 외식을 추천합니다.</p>
+                                </div>
+                                <button 
+                                    onClick={() => {
+                                        setUserProfile(prev => ({ ...prev, allowDiningOut: !prev.allowDiningOut }));
+                                        showToast(`외식 추천 설정이 ${!userProfile.allowDiningOut ? '허용' : '차단'}되었습니다.`);
+                                    }}
+                                    className={`w-12 h-6 rounded-full p-1 transition-colors ${userProfile.allowDiningOut ? 'bg-sage-600' : 'bg-slate-300'}`}
+                                >
+                                    <div className={`w-4 h-4 rounded-full bg-white transition-transform ${userProfile.allowDiningOut ? 'translate-x-6' : 'translate-x-0'}`}></div>
+                                </button>
+                            </div>
+
+                            {/* Allergies & Preferences */}
+                            <div className="bg-white p-5 rounded-3xl border border-cream-200 space-y-3">
+                                <h3 className="font-bold text-xs text-slate-800">알레르기 및 음식 취향</h3>
+                                <div className="text-xs space-y-1.5 text-slate-600">
+                                    <p>• <strong>알레르기:</strong> {userProfile.allergies.join(', ')}</p>
+                                    <p>• <strong>선호 음식:</strong> {userProfile.likedFoods.join(', ')}</p>
+                                    <p>• <strong>비선호 음식:</strong> {userProfile.dislikedFoods.join(', ')}</p>
+                                </div>
+                            </div>
+
+                            {/* Logout CTA */}
+                            <button 
+                                onClick={() => showToast('로그아웃 되었습니다. (Mock)')}
+                                className="w-full bg-slate-100 text-slate-500 text-xs font-semibold py-3 rounded-2xl hover:bg-slate-200 transition"
+                            >
+                                로그아웃
+                            </button>
+                        </div>
+                    )}
+
+                    {/* VIEW 5: STEPPER ONBOARDING (단계별 온보딩) */}
+                    {currentTab === 'onboarding' && (
+                        <div className="px-5 py-6 space-y-6 animate-fadeIn min-h-[600px] flex flex-col justify-between">
+                            <div className="space-y-4">
+                                <div className="flex justify-between items-center">
+                                    <button onClick={() => setCurrentTab('home')} className="text-slate-400 hover:text-slate-700">
+                                        <Icon name="back" className="w-5 h-5" />
+                                    </button>
+                                    <span className="text-xs font-bold text-sage-600">온보딩 (STEP 2 / 5)</span>
+                                </div>
+
+                                <div className="w-full bg-cream-200 h-1.5 rounded-full overflow-hidden">
+                                    <div className="bg-sage-600 h-full w-2/5 rounded-full"></div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <h2 className="text-lg font-bold text-slate-800">건강 상태를 자연어로 알려주세요</h2>
+                                    <p className="text-xs text-slate-500 leading-relaxed">
+                                        진단받으신 질환이나 줄이고 싶은 음식 목표를 편하게 작성하시면 AI가 분석하여 요인을 추출합니다.
+                                    </p>
+                                </div>
+
+                                <textarea 
+                                    rows="4" 
+                                    defaultValue="콜레스테롤이 높고 통풍 진단을 받았어."
+                                    className="w-full bg-white border border-cream-200 rounded-2xl p-4 text-xs text-slate-800 focus:outline-none focus:border-sage-500"
+                                    placeholder="예: 콜레스테롤이 높고 혈압이 약간 있어."
+                                ></textarea>
+
+                                <div className="bg-sage-50 p-4 rounded-2xl border border-sage-100 space-y-2">
+                                    <p className="text-xs font-bold text-sage-800">✨ AI 추출 예상 분석 결과</p>
+                                    <div className="flex gap-2">
+                                        <span className="bg-white border border-sage-200 text-sage-800 text-xs px-2.5 py-1 rounded-lg">
+                                            질환: LDL 콜레스테롤
+                                        </span>
+                                        <span className="bg-white border border-sage-200 text-sage-800 text-xs px-2.5 py-1 rounded-lg">
+                                            질환: 통풍
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button 
+                                onClick={() => {
+                                    showToast('건강 정보 등록 완료! 홈 화면으로 이동합니다.');
+                                    setCurrentTab('home');
+                                }}
+                                className="w-full bg-sage-600 text-white font-semibold text-xs py-3.5 rounded-2xl shadow-md"
+                            >
+                                분석 결과 승인 및 저장하기
+                            </button>
+                        </div>
+                    )}
+                </div>
+
+                {/* Modal 1: Recipe & Dining Out Guide Modal */}
+                {selectedRecipeItem && (
+                    <div className="absolute inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fadeIn">
+                        <div className="bg-white w-full rounded-t-3xl sm:rounded-3xl p-6 space-y-4 max-h-[85%] overflow-y-auto">
+                            <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+                                <div>
+                                    <span className="text-[10px] bg-sage-100 text-sage-800 px-2 py-0.5 rounded font-bold">
+                                        {selectedRecipeItem.preparationType}
+                                    </span>
+                                    <h3 className="text-base font-bold text-slate-800 mt-1">{selectedRecipeItem.foodName}</h3>
+                                </div>
+                                <button onClick={() => setSelectedRecipeItem(null)} className="text-slate-400">
+                                    <Icon name="close" className="w-5 h-5" />
+                                </button>
+                            </div>
+
+                            {/* Recipe Content */}
+                            <div className="space-y-3 text-xs text-slate-700">
+                                <p><strong>분량:</strong> {selectedRecipeItem.servingDescription}</p>
+                                
+                                <div className="bg-cream-50 p-3 rounded-2xl space-y-1">
+                                    <p className="font-bold text-slate-800">필요 재료</p>
+                                    <p className="text-slate-600">• 주요 재료: 주재료 적당량, 나트륨 조절용 저염 양념</p>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <p className="font-bold text-slate-800">조리 / 준비 단계</p>
+                                    <ol className="list-decimal list-inside space-y-1.5 text-slate-600 leading-relaxed">
+                                        <li>재료를 깨끗이 씻어 준비합니다.</li>
+                                        <li>포화지방 사용을 줄이기 위해 올리브유 소량을 팬에 두릅니다.</li>
+                                        <li>약불에서 은은하게 익혀 완성합니다.</li>
+                                    </ol>
+                                </div>
+                            </div>
+
+                            <button 
+                                onClick={() => setSelectedRecipeItem(null)}
+                                className="w-full bg-slate-800 text-white text-xs font-semibold py-3 rounded-xl"
+                            >
+                                닫기
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* Modal 2: Add Custom Meal Record Modal */}
+                {showAddRecordModal && (
+                    <div className="absolute inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                        <div className="bg-white w-full max-w-xs rounded-3xl p-5 space-y-4">
+                            <h3 className="font-bold text-sm text-slate-800">다른 음식 직접 기록</h3>
+                            
+                            <div className="space-y-3 text-xs">
+                                <div>
+                                    <label className="block text-slate-500 mb-1">끼니 선택</label>
+                                    <select 
+                                        value={customMealInput.mealType}
+                                        onChange={(e) => setCustomMealInput({ ...customMealInput, mealType: e.target.value })}
+                                        className="w-full bg-cream-50 border border-cream-200 p-2.5 rounded-xl"
+                                    >
+                                        <option value="BREAKFAST">아침</option>
+                                        <option value="LUNCH">점심</option>
+                                        <option value="DINNER">저녁</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label className="block text-slate-500 mb-1">섭취한 음식명</label>
+                                    <input 
+                                        type="text" 
+                                        placeholder="예: 곱도리탕 1그릇"
+                                        value={customMealInput.foodName}
+                                        onChange={(e) => setCustomMealInput({ ...customMealInput, foodName: e.target.value })}
+                                        className="w-full bg-cream-50 border border-cream-200 p-2.5 rounded-xl focus:outline-none"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="flex gap-2 pt-2">
+                                <button 
+                                    onClick={() => setShowAddRecordModal(false)}
+                                    className="flex-1 bg-slate-100 text-slate-600 text-xs py-2.5 rounded-xl"
+                                >
+                                    취소
+                                </button>
+                                <button 
+                                    onClick={handleSaveCustomRecord}
+                                    className="flex-1 bg-sage-600 text-white text-xs py-2.5 rounded-xl font-semibold"
+                                >
+                                    저장하기
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Bottom Thumb-Friendly Navigation Bar (4 핵심 탭) */}
+                <nav className="absolute bottom-0 inset-x-0 bg-white/95 backdrop-blur-md border-t border-cream-200 px-6 py-2.5 flex justify-between items-center z-40">
+                    {[
+                        { id: 'home', label: '홈', icon: 'home' },
+                        { id: 'records', label: '식사 기록', icon: 'calendar' },
+                        { id: 'chat', label: 'AI 챗봇', icon: 'message' },
+                        { id: 'mypage', label: '마이페이지', icon: 'user' }
+                    ].map((tab) => {
+                        const isActive = currentTab === tab.id;
+                        return (
+                            <button 
+                                key={tab.id}
+                                onClick={() => setCurrentTab(tab.id)}
+                                className={`flex flex-col items-center gap-1 transition-colors ${isActive ? 'text-sage-600' : 'text-slate-400 hover:text-slate-600'}`}
+                            >
+                                <Icon name={tab.icon} className="w-5 h-5" />
+                                <span className={`text-[10px] ${isActive ? 'font-bold' : 'font-medium'}`}>{tab.label}</span>
+                            </button>
+                        );
+                    })}
+                </nav>
+            </div>
+        );
+    }
+
+    // Render React Application
+    const rootElement = document.getElementById('root');
+    const root = ReactDOM.createRoot(rootElement);
+    root.render(<App />);
+</script>
+
+</body>
+</html>
