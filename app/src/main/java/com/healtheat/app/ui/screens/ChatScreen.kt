@@ -100,9 +100,9 @@ fun ChatScreen(vm: HealtheatViewModel, onGoHome: () -> Unit) {
                 "건강정보 바꾸기",
                 "얼마나 자주 먹었을까?",
                 "식단 다시 추천받기"
-            ).forEach { prompt ->
+            ).forEachIndexed { index, prompt ->
                 Surface(
-                    onClick = { input = prompt },
+                    onClick = { vm.selectChatExample(index) },
                     shape = RoundedCornerShape(50.dp), color = Palette.Lavender
                 ) {
                     Text(prompt, Modifier.padding(horizontal = 12.dp, vertical = 9.dp),

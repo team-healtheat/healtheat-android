@@ -29,7 +29,7 @@ android {
     }
     kotlinOptions { jvmTarget = "17" }
     buildFeatures { compose = true; buildConfig = true }
-    val serverUrl = providers.gradleProperty("healtheatApiUrl").orNull ?: "http://10.0.2.2:8080/"
+    val serverUrl = providers.gradleProperty("healtheatApiUrl").orNull ?: "https://54-180-24-120.nip.io/"
     defaultConfig {
         buildConfigField("String", "API_BASE_URL", "\"${serverUrl.trimEnd('/')}/\"")
     }

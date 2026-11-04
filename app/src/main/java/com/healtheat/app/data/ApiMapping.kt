@@ -168,7 +168,7 @@ fun JsonElement?.toPreferences(previous: UserProfile): UserProfile {
     return previous.copy(
         allowDiningOut = prefs.flag("allowDiningOut") ?: previous.allowDiningOut,
         allergies = allergies,
-        allergyStatus = when(status) { "PRESENT" -> "선택함"; "NONE" -> "없음"; "UNANSWERED" -> "미응답"; else -> status },
+        allergyStatus = when(status) { "PRESENT" -> "있음"; "NONE" -> "없음"; "UNANSWERED" -> "미응답"; else -> status },
         liked = csv("likedFoods", previous.liked), disliked = csv("dislikedFoods", previous.disliked),
         style = csv("dietaryPreferences", previous.style)
     )

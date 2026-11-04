@@ -79,7 +79,7 @@ fun ProfileScreen(vm: HealtheatViewModel, onOnboarding: () -> Unit, onAuth: () -
         RoundedPanel(Modifier.fillMaxWidth()) {
             Text("알레르기 & 음식 취향", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Palette.Ink)
             Spacer(Modifier.height(12.dp))
-            PreferenceRow("알레르기", if (profile.allergyStatus == "선택함") profile.allergies.joinToString(", ").ifBlank { "없음" } else profile.allergyStatus)
+            PreferenceRow("알레르기", if (profile.allergyStatus == "있음") profile.allergies.joinToString(", ").ifBlank { "없음" } else profile.allergyStatus)
             HorizontalDivider(color = Palette.Border)
             PreferenceRow("좋아하는 음식", profile.liked.ifBlank { "미입력" })
             HorizontalDivider(color = Palette.Border)

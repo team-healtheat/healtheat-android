@@ -66,8 +66,7 @@ fun HealtheatApp(vm: HealtheatViewModel = viewModel()) {
             if (isMain) {
                 NavigationBar(
                     containerColor = Palette.White,
-                    tonalElevation = 1.dp,
-                    modifier = Modifier.height(76.dp)
+                    tonalElevation = 1.dp
                 ) {
                     pages.forEach { item ->
                         val active = page == item.route

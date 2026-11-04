@@ -17,6 +17,7 @@ import java.time.ZoneId
 
 /** Real network ViewModel. No fake responses are shown when API calls fail. */
 class HealtheatViewModel : ViewModel() {
+    private enum class GuidedChatIntent { FOOD_SAFETY, HEALTH_INFO, FOOD_FREQUENCY, MEAL_RECOMMENDATION }
     val today: LocalDate get() = LocalDate.now(ZoneId.of("Asia/Seoul"))
     private val api = ApiClient.service
 
@@ -61,6 +62,9 @@ class HealtheatViewModel : ViewModel() {
         private set
     var chatBusy by mutableStateOf(false)
         private set
+    private var guidedChatIntent: GuidedChatIntent? = null
+    private var guidedFoodName: String? = null
+    private var pendingChatExampleIndex: Int? = null
 
     private var nextLocalId = 100000L
     private fun nextId(): Long = ++nextLocalId
@@ -120,7 +124,7 @@ class HealtheatViewModel : ViewModel() {
                 authenticated = false
                 profile = UserProfile()
                 planId = null; hasPlan = false; meals.clear(); records.clear()
-                sessionId = null; messages.clear(); recipes.clear()
+                sessionId = null; messages.clear(); recipes.clear(); clearGuidedChat()
                 onDone()
             }
         }
@@ -277,11 +281,11 @@ class HealtheatViewModel : ViewModel() {
         style: String, factors: List<HealthFactor>, onSuccess: () -> Unit = {}
     ) {
         if (savingProfile) return
-        if (allergyStatus == "선택함" && allergies.isEmpty()) { toast("알레르기를 하나 이상 선택해 주세요"); return }
+        if (allergyStatus == "있음" && allergies.isEmpty()) { toast("알레르기를 하나 이상 선택해 주세요"); return }
         savingProfile = true
         viewModelScope.launch {
             try {
-                val rawStatus = when(allergyStatus) { "선택함" -> "PRESENT"; "없음" -> "NONE"; else -> "UNANSWERED" }
+                val rawStatus = when(allergyStatus) { "있음" -> "PRESENT"; "없음" -> "NONE"; else -> "UNANSWERED" }
                 val asArray = { values: List<String> -> JsonArray().apply { values.forEach { add(it) } } }
                 // Save server-side age and gender; they live in their own endpoint.
                 ApiClient.prepareMutation()
@@ -352,30 +356,103 @@ class HealtheatViewModel : ViewModel() {
                 messages.clear(); messages.addAll(history)
                 if (history.isEmpty()) messages.add(ChatMessage(nextId(), false,
                     "안녕하세요! 음식 상담, 식사 횟수 조회, 건강정보 변경, 식단 재추천을 도와드릴게요."))
+                pendingChatExampleIndex?.let { index ->
+                    pendingChatExampleIndex = null
+                    selectChatExample(index)
+                }
             } catch (t: Exception) { report(t) }
             finally { chatBusy = false }
         }
+    }
+
+    /** Shows an input guide for a suggestion chip without sending an API request. */
+    fun selectChatExample(index: Int) {
+        if (sessionId == null) {
+            pendingChatExampleIndex = index
+            openChat()
+            return
+        }
+        if (sending) return
+        val intentAndPrompt = when (index) {
+            0 -> GuidedChatIntent.FOOD_SAFETY to "어떤 음식을 먹어도 되는지 궁금하신가요? 음식 이름을 알려주세요!"
+            1 -> GuidedChatIntent.HEALTH_INFO to "어떤 건강정보를 변경하고 싶으신가요?"
+            2 -> GuidedChatIntent.FOOD_FREQUENCY to "확인할 음식 이름을 알려주세요!"
+            3 -> GuidedChatIntent.MEAL_RECOMMENDATION to "아침·점심·저녁 중 어떤 끼니를 다시 추천받고 싶으신가요?"
+            else -> return
+        }
+        guidedChatIntent = intentAndPrompt.first
+        guidedFoodName = null
+        messages.add(ChatMessage(nextId(), false, intentAndPrompt.second))
     }
 
     fun sendMessage(text: String) {
         val message = text.trim()
         val session = sessionId ?: run { toast("채팅 세션을 시작해 주세요"); openChat(); return }
         if (message.isEmpty() || sending) return
-        sending = true
         messages.add(ChatMessage(nextId(), true, message))
+        val apiMessage = completeGuidedMessage(message) ?: return
+        sending = true
         viewModelScope.launch {
             try {
                 ApiClient.prepareMutation()
-                val result = api.send(obj("sessionId" to session, "message" to message)).requireBodyOrNull()
+                val result = api.send(obj("sessionId" to session, "message" to apiMessage)).requireBodyOrNull()
                 messages.add(ChatMessage(nextId(), false, result.chatReply()))
                 // Chat can alter meal plan / health data on server without an approval step.
                 refreshProfile(); refreshToday()
             } catch (t: Exception) {
                 messages.add(ChatMessage(nextId(), false, "전송 실패: ${t.message ?: "서버 연결을 확인해 주세요"}"))
-                if (t is ApiException && t.statusCode == 410) sessionId = null
+                if (t is ApiException && t.statusCode == 410) {
+                    sessionId = null
+                    clearGuidedChat()
+                }
                 report(t)
             } finally { sending = false }
         }
+    }
+
+    private fun completeGuidedMessage(input: String): String? = when (guidedChatIntent) {
+        null -> input
+        GuidedChatIntent.FOOD_SAFETY -> {
+            clearGuidedChat()
+            "${input}${objectParticle(input)} 먹어도 될까?"
+        }
+        GuidedChatIntent.HEALTH_INFO -> {
+            clearGuidedChat()
+            "건강정보를 ${input}(으)로 바꾸고 싶어."
+        }
+        GuidedChatIntent.FOOD_FREQUENCY -> {
+            val food = guidedFoodName
+            if (food == null) {
+                guidedFoodName = input
+                messages.add(ChatMessage(nextId(), false, "어느 기간의 식사 횟수를 확인할까요? 예: 최근 2주, 10월 1일~10월 31일"))
+                null
+            } else {
+                clearGuidedChat()
+                "${food}${objectParticle(food)} ${input} 동안 얼마나 자주 먹었을까?"
+            }
+        }
+        GuidedChatIntent.MEAL_RECOMMENDATION -> {
+            val meal = listOf("아침", "점심", "저녁").firstOrNull { input.contains(it) }
+            if (meal == null) {
+                messages.add(ChatMessage(nextId(), false, "아침, 점심, 저녁 중 하나를 알려주세요!"))
+                null
+            } else {
+                clearGuidedChat()
+                "${meal} 식단을 다시 추천해 줘."
+            }
+        }
+    }
+
+    private fun objectParticle(word: String): String {
+        val last = word.lastOrNull() ?: return "을"
+        if (last !in '\uAC00'..'\uD7A3') return "을"
+        return if ((last.code - 0xAC00) % 28 == 0) "를" else "을"
+    }
+
+    private fun clearGuidedChat() {
+        guidedChatIntent = null
+        guidedFoodName = null
+        pendingChatExampleIndex = null
     }
 
     fun endChat() {
@@ -384,7 +461,7 @@ class HealtheatViewModel : ViewModel() {
             try {
                 ApiClient.prepareMutation()
                 api.endChat(id).requireBodyOrNull()
-                sessionId = null; messages.clear()
+                sessionId = null; messages.clear(); clearGuidedChat()
                 toast("채팅을 종료하고 대화 내역을 삭제했어요")
             } catch (t: Exception) { report(t) }
         }

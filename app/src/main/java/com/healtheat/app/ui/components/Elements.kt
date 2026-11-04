@@ -39,7 +39,11 @@ fun PageHeader(title: String, subtitle: String? = null, action: (@Composable () 
 @Composable
 fun BrandHeader(onOnboarding: () -> Unit) {
     Row(
-        Modifier.fillMaxWidth().background(Palette.Background).padding(horizontal = 22.dp, vertical = 13.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Palette.Background)
+            .statusBarsPadding()
+            .padding(horizontal = 22.dp, vertical = 13.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {

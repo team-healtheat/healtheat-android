@@ -153,15 +153,15 @@ fun OnboardingScreen(vm: HealtheatViewModel, onBack: () -> Unit, onFinish: () ->
                         Text("알레르기 상태", color = Palette.Ink, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                         Spacer(Modifier.height(8.dp))
                         Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(7.dp)) {
-                            listOf("선택함", "없음").forEach { status ->
+                            listOf("있음", "없음").forEach { status ->
                                 FilterChip(selected = allergyStatus == status, onClick = {
                                     allergyStatus = status
-                                    if (status != "선택함") { allergies.clear(); otherAllergy = "" }
+                                    if (status != "있음") { allergies.clear(); otherAllergy = "" }
                                 }, label = { Text(status, fontSize = 11.sp) },
                                     colors = FilterChipDefaults.filterChipColors(selectedContainerColor = Palette.Lavender))
                             }
                         }
-                        if (allergyStatus == "선택함") {
+                        if (allergyStatus == "있음") {
                             Spacer(Modifier.height(14.dp))
                             Text("해당하는 항목을 선택해 주세요", fontSize = 11.sp, color = Palette.Muted)
                             Spacer(Modifier.height(6.dp))
@@ -209,7 +209,7 @@ fun OnboardingScreen(vm: HealtheatViewModel, onBack: () -> Unit, onFinish: () ->
                         SummaryRow("기본 정보", "${age}세 · $gender")
                         SummaryRow("배달·외식", if (diningOut) "허용" else "허용 안 함")
                         SummaryRow("건강 요인", factors.joinToString { it.label }.ifBlank { "기존 정보 유지" })
-                        SummaryRow("알레르기", if (allergyStatus == "선택함") (allergies + otherAllergy.takeIf { it.isNotBlank() }.orEmpty()).filter { it.isNotBlank() }.joinToString().ifBlank { "미선택" } else allergyStatus)
+                        SummaryRow("알레르기", if (allergyStatus == "있음") (allergies + otherAllergy.takeIf { it.isNotBlank() }.orEmpty()).filter { it.isNotBlank() }.joinToString().ifBlank { "미선택" } else allergyStatus)
                         SummaryRow("좋아하는 음식", liked.ifBlank { "미입력" })
                         SummaryRow("피하고 싶은 음식", disliked.ifBlank { "미입력" })
                         SummaryRow("식사 스타일", style.ifBlank { "미입력" })
@@ -226,11 +226,11 @@ fun OnboardingScreen(vm: HealtheatViewModel, onBack: () -> Unit, onFinish: () ->
                 when {
                     step == 2 && healthText.isNotBlank() && (!analyzed || !confirmed) -> vm.toast("분석 결과를 먼저 확인해 주세요")
                     step == 1 && (age.toIntOrNull() == null || age.toInt() !in 1..120) -> vm.toast("나이를 확인해 주세요")
-                    step == 3 && allergyStatus !in listOf("선택함", "없음") -> vm.toast("알레르기 상태를 선택해 주세요")
-                    step == 3 && allergyStatus == "선택함" && allergies.isEmpty() && otherAllergy.isBlank() -> vm.toast("알레르기를 하나 이상 선택해 주세요")
+                    step == 3 && allergyStatus !in listOf("있음", "없음") -> vm.toast("알레르기 상태를 선택해 주세요")
+                    step == 3 && allergyStatus == "있음" && allergies.isEmpty() && otherAllergy.isBlank() -> vm.toast("알레르기를 하나 이상 선택해 주세요")
                     step < 5 -> step++
                     else -> {
-                        val finalAllergies = if (allergyStatus == "선택함")
+                        val finalAllergies = if (allergyStatus == "있음")
                             (allergies + otherAllergy.trim().takeIf { it.isNotEmpty() }.orEmpty()).filter { it.isNotBlank() }
                             else emptyList()
                         vm.updateProfile(age.toIntOrNull() ?: vm.profile.age, gender, diningOut, healthText,
