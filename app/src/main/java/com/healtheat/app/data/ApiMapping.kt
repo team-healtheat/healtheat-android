@@ -5,6 +5,9 @@ import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import java.time.LocalDate
 import java.time.format.DateTimeParseException
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 // API contract includes required concepts but not full JSON examples. Keep adaptation in one file.
 private fun JsonElement?.asObjectOrNull(): JsonObject? = if (this != null && isJsonObject) asJsonObject else null
@@ -196,16 +199,47 @@ fun JsonElement?.chatSessionId(): Long? {
     return root.number("sessionId", "id") ?: root.read("session").asObjectOrNull()?.number("id")
 }
 
-fun JsonElement?.chatMessages(): List<ChatMessage> {
-    val raw = unwrap()
-    val items = raw.asArrayOrNull()?.toList() ?: raw.asObjectOrNull()?.list("messages", "items", "content") ?: emptyList()
-    return items.mapIndexedNotNull { idx, e ->
-        val m = e.asObjectOrNull() ?: return@mapIndexedNotNull null
-        ChatMessage(m.number("id") ?: idx.toLong(),
-            m.text("role")?.uppercase() in setOf("USER", "HUMAN"),
-            m.text("content", "message") ?: return@mapIndexedNotNull null)
+
+private fun formatChatTime(createdAt: String?): String {
+    if (createdAt.isNullOrBlank()) {
+        return "시간 정보 없음"
+    }
+
+    return runCatching {
+        Instant.parse(createdAt)
+            .atZone(ZoneId.of("Asia/Seoul"))
+            .format(DateTimeFormatter.ofPattern("M/d HH:mm"))
+    }.getOrElse {
+        "시간 정보 없음"
     }
 }
+
+
+fun JsonElement?.chatMessages(): List<ChatMessage> {
+    val raw = unwrap()
+
+    val items = raw.asArrayOrNull()?.toList()
+        ?: raw.asObjectOrNull()
+            ?.list("messages", "items", "content")
+        ?: emptyList()
+
+    return items.mapIndexedNotNull { idx, e ->
+        val m = e.asObjectOrNull()
+            ?: return@mapIndexedNotNull null
+
+        val messageText = m.text("content", "message")
+            ?: return@mapIndexedNotNull null
+
+        ChatMessage(
+            id = m.number("id") ?: idx.toLong(),
+            fromUser = m.text("role")
+                ?.uppercase() in setOf("USER", "HUMAN"),
+            text = messageText,
+            time = formatChatTime(m.text("createdAt"))
+        )
+    }
+}
+
 
 /** The backend stores age and gender separately from /api/users/me. */
 fun JsonElement?.toBasicProfile(previous: UserProfile): UserProfile {

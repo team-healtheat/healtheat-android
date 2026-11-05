@@ -14,27 +14,189 @@ import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
+import retrofit2.http.HTTP
 import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Path
 import retrofit2.http.Query
 import java.util.concurrent.TimeUnit
+import android.content.Context
+import android.content.SharedPreferences
+import android.security.keystore.KeyGenParameterSpec
+import android.security.keystore.KeyProperties
+import android.util.Base64
+import okhttp3.HttpUrl.Companion.toHttpUrl
+import java.security.KeyStore
+import javax.crypto.Cipher
+import javax.crypto.KeyGenerator
+import javax.crypto.SecretKey
+import javax.crypto.spec.GCMParameterSpec
 
 /** In-memory cookies: no JWT in localStorage/SharedPreferences or logs. Logout/restart clears them. */
+
 class SessionCookieJar : CookieJar {
+
     private val jar = mutableListOf<Cookie>()
-    @Synchronized override fun saveFromResponse(url: HttpUrl, cookies: List<Cookie>) {
-        for (cookie in cookies) {
-            jar.removeAll { it.name == cookie.name && it.domain == cookie.domain && it.path == cookie.path }
-            if (cookie.expiresAt > System.currentTimeMillis()) jar.add(cookie)
+    private var prefs: SharedPreferences? = null
+
+    private val alias = "healtheat_session_key"
+    private val cookieNames = setOf("access_token", "refresh_token")
+
+    @Synchronized
+    fun hasRestorableSession(): Boolean {
+        return jar.any {
+            it.name in setOf("access_token", "refresh_token") &&
+                    it.expiresAt > System.currentTimeMillis()
         }
     }
-    @Synchronized override fun loadForRequest(url: HttpUrl): List<Cookie> {
-        jar.removeAll { it.expiresAt <= System.currentTimeMillis() }
+    @Synchronized
+    fun initialize(context: Context) {
+        prefs = context.applicationContext.getSharedPreferences(
+            "healtheat_secure_session",
+            Context.MODE_PRIVATE
+        )
+
+        val encrypted = prefs?.getString("cookies", null) ?: return
+
+        try {
+            val url = BuildConfig.API_BASE_URL.toHttpUrl()
+            val saved = decrypt(encrypted)
+
+            jar.clear()
+
+            saved.lineSequence()
+                .mapNotNull { Cookie.parse(url, it) }
+                .filter {
+                    it.name in cookieNames &&
+                            it.expiresAt > System.currentTimeMillis() &&
+                            it.matches(url)
+                }
+                .forEach { jar.add(it) }
+
+        } catch (_: Exception) {
+            jar.clear()
+            prefs?.edit()?.remove("cookies")?.commit()
+        }
+    }
+
+    @Synchronized
+    override fun saveFromResponse(
+        url: HttpUrl,
+        cookies: List<Cookie>
+    ) {
+        cookies.forEach { cookie ->
+            jar.removeAll {
+                it.name == cookie.name &&
+                        it.domain == cookie.domain &&
+                        it.path == cookie.path
+            }
+
+            if (cookie.expiresAt > System.currentTimeMillis()) {
+                jar.add(cookie)
+            }
+        }
+
+        persist()
+    }
+
+    @Synchronized
+    override fun loadForRequest(url: HttpUrl): List<Cookie> {
+        jar.removeAll {
+            it.expiresAt <= System.currentTimeMillis()
+        }
+
         return jar.filter { it.matches(url) }
     }
-    @Synchronized fun clear() = jar.clear()
+
+    @Synchronized
+    fun clear() {
+        jar.clear()
+        prefs?.edit()?.remove("cookies")?.commit()
+    }
+
+    private fun persist() {
+        val value = jar
+            .filter {
+                it.name in cookieNames &&
+                        it.expiresAt > System.currentTimeMillis()
+            }
+            .joinToString("\n") { it.toString() }
+
+        if (value.isBlank()) {
+            prefs?.edit()?.remove("cookies")?.commit()
+            return
+        }
+
+        val encrypted = encrypt(value)
+        prefs?.edit()?.putString("cookies", encrypted)?.commit()
+    }
+
+    private fun secretKey(): SecretKey {
+        val keyStore = KeyStore.getInstance("AndroidKeyStore").apply {
+            load(null)
+        }
+
+        val existing = keyStore.getKey(alias, null) as? SecretKey
+        if (existing != null) return existing
+
+        val generator = KeyGenerator.getInstance(
+            KeyProperties.KEY_ALGORITHM_AES,
+            "AndroidKeyStore"
+        )
+
+        val spec = KeyGenParameterSpec.Builder(
+            alias,
+            KeyProperties.PURPOSE_ENCRYPT or
+                    KeyProperties.PURPOSE_DECRYPT
+        )
+            .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
+            .setEncryptionPaddings(
+                KeyProperties.ENCRYPTION_PADDING_NONE
+            )
+            .build()
+
+        generator.init(spec)
+
+        return generator.generateKey()
+    }
+
+    private fun encrypt(value: String): String {
+        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+        cipher.init(Cipher.ENCRYPT_MODE, secretKey())
+
+        val encrypted = cipher.doFinal(
+            value.toByteArray(Charsets.UTF_8)
+        )
+
+        val result = cipher.iv + encrypted
+
+        return Base64.encodeToString(
+            result,
+            Base64.NO_WRAP
+        )
+    }
+
+    private fun decrypt(value: String): String {
+        val bytes = Base64.decode(value, Base64.NO_WRAP)
+        require(bytes.size > 12)
+
+        val iv = bytes.copyOfRange(0, 12)
+        val data = bytes.copyOfRange(12, bytes.size)
+
+        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+
+        cipher.init(
+            Cipher.DECRYPT_MODE,
+            secretKey(),
+            GCMParameterSpec(128, iv)
+        )
+
+        return String(
+            cipher.doFinal(data),
+            Charsets.UTF_8
+        )
+    }
 }
 
 interface HealtheatApi {
@@ -63,11 +225,38 @@ interface HealtheatApi {
     @GET("api/chat/sessions/{sessionId}/messages") suspend fun chatHistory(@Path("sessionId") sessionId: Long): Response<JsonElement>
     @POST("api/chat/messages") suspend fun send(@Body body: JsonObject): Response<JsonElement>
     @DELETE("api/chat/sessions/{sessionId}") suspend fun endChat(@Path("sessionId") sessionId: Long): Response<JsonElement>
+
+    // Access Token 자동 갱신
+    @POST("api/auth/refresh")
+    suspend fun refreshToken(): Response<JsonElement>
+
+    // 닉네임 변경
+    @PATCH("api/users/me/nickname")
+    suspend fun updateNickname(
+        @Body body: JsonObject
+    ): Response<JsonElement>
+
+    // 회원탈퇴 - 비밀번호 확인 필요
+    @HTTP(method = "DELETE", path = "api/users/me", hasBody = true)
+    suspend fun deleteAccount(
+        @Body body: JsonObject
+    ): Response<JsonElement>
+
+    // 기존 식사 기록 변경
+    @PUT("api/meal-records/{recordId}")
+    suspend fun updateMealRecord(
+        @Path("recordId") recordId: Long,
+        @Body body: JsonObject
+    ): Response<JsonElement>
+
 }
 
 class ApiException(val statusCode: Int, val errorCode: String?, override val message: String) : Exception(message)
 
 object ApiClient {
+    fun initialize(context: Context) {
+        cookies.initialize(context)
+    }
     /** The supplied backend always issues Secure cookies. HTTPS is required, even for emulator testing. */
     fun requireHttpsForLogin() {
         if (!BuildConfig.API_BASE_URL.startsWith("https://", ignoreCase = true)) {

@@ -1,6 +1,9 @@
 package com.healtheat.app.data
 
 import java.time.LocalDate
+import java.time.ZonedDateTime
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 enum class MealType(val label: String, val emoji: String) {
     BREAKFAST("아침", "🥐"), LUNCH("점심", "🥗"), DINNER("저녁", "🍲")
@@ -69,6 +72,13 @@ data class MealRecord(
     val recommendationId: Long? = null
 )
 
-data class ChatMessage(val id: Long, val fromUser: Boolean, val text: String, val time: String = "방금")
+data class ChatMessage(
+    val id: Long,
+    val fromUser: Boolean,
+    val text: String,
+    val time: String = ZonedDateTime
+        .now(ZoneId.of("Asia/Seoul"))
+        .format(DateTimeFormatter.ofPattern("M/d HH:mm"))
+)
 
 

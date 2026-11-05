@@ -1,18 +1,21 @@
+
 package com.healtheat.app.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Add
-import androidx.compose.material.icons.outlined.CheckCircleOutline
-import androidx.compose.material.icons.outlined.DateRange
-import androidx.compose.material.icons.outlined.Edit
-import androidx.compose.material3.*
+import androidx.compose.material.icons.outlined.KeyboardArrowLeft
+import androidx.compose.material.icons.outlined.KeyboardArrowRight
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -20,141 +23,380 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
-import com.healtheat.app.data.*
+import com.healtheat.app.data.MealType
 import com.healtheat.app.ui.HealtheatViewModel
-import com.healtheat.app.ui.components.*
+import com.healtheat.app.ui.components.PageHeader
+import com.healtheat.app.ui.components.RoundedPanel
 import com.healtheat.app.ui.theme.Palette
-import com.healtheat.app.ui.theme.healtheatTextFieldColors
+import java.time.LocalDate
+import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 @Composable
 fun RecordsScreen(vm: HealtheatViewModel) {
-    var showAdd by remember { mutableStateOf(false) }
-    val recordsOnDate = vm.records.filter { it.date == vm.selectedDate }
-    Column(
-        Modifier.fillMaxSize().verticalScroll(rememberScrollState())
-            .padding(horizontal = 21.dp).padding(top = 15.dp, bottom = 30.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp)
-    ) {
-        PageHeader("식사 기록", "오늘 먹은 것부터 차곡차곡") {
-            FilledAction("직접 기록", onClick = { showAdd = true },
-                modifier = Modifier.width(112.dp), color = Palette.Coral, icon = Icons.Outlined.Add)
-        }
-        RoundedPanel(Modifier.fillMaxWidth(), Palette.Lavender) {
-            Text("MY FOOD JOURNAL", color = Palette.Primary, fontSize = 10.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 1.1.sp)
-            Spacer(Modifier.height(7.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Text("하루 한 끼의 기록이\n나를 더 잘 알게 해요", color = Palette.Ink, fontWeight = FontWeight.Bold,
-                        fontSize = 17.sp, lineHeight = 24.sp)
-                    Spacer(Modifier.height(5.dp))
-                    Text("총 ${vm.records.size}개의 식사 기록", fontSize = 11.sp, color = Palette.Body)
-                }
-                Text("📔", fontSize = 49.sp)
-            }
-        }
-        Column {
-            Text("날짜 선택", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Palette.Ink)
-            Spacer(Modifier.height(11.dp))
-            Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                (6 downTo 0).forEach { offset ->
-                    val day = vm.today.minusDays(offset.toLong())
-                    val selected = day == vm.selectedDate
-                    Column(
-                        Modifier.width(47.dp)
-                            .background(if (selected) Palette.Primary else Palette.White, RoundedCornerShape(16.dp))
-                            .clickable { vm.selectedDate = day }
-                            .padding(vertical = 11.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(if (day == vm.today) "오늘" else day.format(DateTimeFormatter.ofPattern("E", Locale.KOREAN)),
-                            fontSize = 10.sp, color = if (selected) Color.White else Palette.Muted)
-                        Spacer(Modifier.height(6.dp))
-                        Text(day.dayOfMonth.toString(), fontSize = 17.sp, fontWeight = FontWeight.Bold,
-                            color = if (selected) Color.White else Palette.Ink)
-                    }
-                }
-            }
-        }
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(vm.selectedDate.format(DateTimeFormatter.ofPattern("M월 d일", Locale.KOREAN)) + "의 식사", fontSize = 17.sp,
-                fontWeight = FontWeight.Bold, color = Palette.Ink)
-            Capsule("${recordsOnDate.size}건 기록됨", Palette.Mint, Palette.MintInk)
-        }
-        MealType.entries.forEach { type ->
-            val typeRecords = recordsOnDate.filter { it.type == type }
-            RoundedPanel(Modifier.fillMaxWidth()) {
-                Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    MenuIllustration(type.emoji, when(type) {
-                        MealType.BREAKFAST -> Palette.Sand
-                        MealType.LUNCH -> Palette.Mint
-                        MealType.DINNER -> Palette.Lavender
-                    }, Modifier.size(56.dp))
-                    Column(Modifier.weight(1f)) {
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text(type.label, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Palette.Ink)
-                            Capsule(if (typeRecords.isEmpty()) "미기록" else "기록 ${typeRecords.size}건",
-                                if (typeRecords.isEmpty()) Palette.Background else Palette.Mint,
-                                if (typeRecords.isEmpty()) Palette.Muted else Palette.MintInk)
-                        }
-                        Spacer(Modifier.height(7.dp))
-                        if (typeRecords.isEmpty()) {
-                            Text("아직 기록이 없어요", fontSize = 12.sp, color = Palette.Muted)
-                        } else {
-                            typeRecords.forEach { r ->
-                                Text(r.foods.joinToString(" · "), fontSize = 12.sp, color = Palette.Body, lineHeight = 18.sp)
-                                Spacer(Modifier.height(4.dp))
-                                Text(if (r.fromRecommendation) "✓ 추천 식단 간편 기록" else "✎ 직접 입력", fontSize = 10.sp,
-                                    color = if (r.fromRecommendation) Palette.MintInk else Palette.Primary)
-                            }
-                        }
-                    }
-                }
-                if (vm.selectedDate == vm.today && vm.hasPlan && typeRecords.isEmpty() && !vm.recording) {
-                    Spacer(Modifier.height(12.dp))
-                    FilledAction("추천 식단 간편 기록", { vm.recordRecommended(type) },
-                        Modifier.fillMaxWidth(), Palette.Primary, icon = Icons.Outlined.CheckCircleOutline)
-                }
-            }
-        }
-        QuietNote("'미기록'은 식사를 거른 것이 아니라, 입력된 기록이 없다는 뜻이에요. 정확한 섭취량이 확인되지 않았다면 실제 섭취량으로 추정하지 않아요.")
+    var month by remember {
+        mutableStateOf(YearMonth.from(vm.today))
     }
 
-    if (showAdd) {
-        RecordDialog(onDismiss = { showAdd = false }, onSave = { type, food ->
-            vm.recordCustom(type, food, vm.selectedDate, onSuccess = { showAdd = false })
-        })
+    var selectedDate by remember {
+        mutableStateOf(vm.today)
+    }
+
+    LaunchedEffect(month, vm.authenticated) {
+        vm.loadCalendarRecords(month)
+    }
+
+    val records = vm.calendarRecords.toList()
+    val grouped = remember(records) {
+        records.groupBy { it.date }
+    }
+    val dailyRecords = grouped[selectedDate].orEmpty()
+
+    val first = month.atDay(1)
+    val leadingBlankCount = first.dayOfWeek.value % 7
+    val totalCells =
+        ((leadingBlankCount + month.lengthOfMonth() + 6) / 7) * 7
+
+    val weekdays = listOf("일", "월", "화", "수", "목", "금", "토")
+
+    Column(
+        Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 21.dp)
+            .padding(top = 15.dp, bottom = 32.dp),
+        verticalArrangement = Arrangement.spacedBy(18.dp)
+    ) {
+        PageHeader(
+            "식사 기록",
+            "날짜를 선택해 먹은 음식을 확인하세요"
+        )
+
+        RoundedPanel(Modifier.fillMaxWidth()) {
+            Row(
+                Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                IconButton(
+                    onClick = {
+                        month = month.minusMonths(1)
+                        selectedDate = month.atDay(1)
+                    }
+                ) {
+                    Icon(
+                        Icons.Outlined.KeyboardArrowLeft,
+                        contentDescription = "이전 달",
+                        tint = Palette.Ink
+                    )
+                }
+
+                Text(
+                    "${month.year}년 ${month.monthValue}월",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 17.sp,
+                    color = Palette.Ink
+                )
+
+                IconButton(
+                    onClick = {
+                        month = month.plusMonths(1)
+                        selectedDate =
+                            if (month == YearMonth.from(vm.today)) {
+                                vm.today
+                            } else {
+                                month.atDay(1)
+                            }
+                    },
+                    enabled = month < YearMonth.from(vm.today)
+                ) {
+                    Icon(
+                        Icons.Outlined.KeyboardArrowRight,
+                        contentDescription = "다음 달",
+                        tint = if (
+                            month < YearMonth.from(vm.today)
+                        ) Palette.Ink else Palette.Border
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(10.dp))
+
+            Row(Modifier.fillMaxWidth()) {
+                weekdays.forEachIndexed { index, label ->
+                    Box(
+                        Modifier
+                            .weight(1f)
+                            .height(28.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            label,
+                            fontSize = 11.sp,
+                            color = if (index == 0) {
+                                Palette.Coral
+                            } else {
+                                Palette.Muted
+                            }
+                        )
+                    }
+                }
+            }
+
+            repeat(totalCells / 7) { week ->
+                Row(Modifier.fillMaxWidth()) {
+                    repeat(7) { weekday ->
+                        val cell = week * 7 + weekday
+                        val dayNumber =
+                            cell - leadingBlankCount + 1
+
+                        if (
+                            dayNumber !in 1..month.lengthOfMonth()
+                        ) {
+                            Spacer(
+                                Modifier
+                                    .weight(1f)
+                                    .aspectRatio(1f)
+                            )
+                        } else {
+                            val date = month.atDay(dayNumber)
+                            val count = grouped[date]?.size ?: 0
+
+                            CalendarDay(
+                                date = date,
+                                count = count,
+                                selected = date == selectedDate,
+                                today = date == vm.today,
+                                onClick = {
+                                    selectedDate = date
+                                },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(6.dp))
+
+            HorizontalDivider(color = Palette.Border)
+
+            Spacer(Modifier.height(10.dp))
+
+            Row(
+                Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    "기록한 날짜 ${grouped.size}일",
+                    fontSize = 12.sp,
+                    color = Palette.Muted
+                )
+
+                Text(
+                    "총 ${records.size}끼",
+                    fontSize = 12.sp,
+                    color = Palette.Muted
+                )
+            }
+        }
+
+        Row(
+            Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                selectedDate.format(
+                    DateTimeFormatter.ofPattern(
+                        "M월 d일 EEEE",
+                        Locale.KOREAN
+                    )
+                ),
+                fontSize = 17.sp,
+                fontWeight = FontWeight.Bold,
+                color = Palette.Ink,
+                modifier = Modifier.weight(1f)
+            )
+
+            Text(
+                "${dailyRecords.size}건",
+                color = Palette.Muted,
+                fontSize = 12.sp
+            )
+        }
+
+        if (vm.calendarLoading) {
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 40.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(
+                    color = Palette.Primary
+                )
+            }
+        } else if (vm.calendarError != null) {
+            RoundedPanel(Modifier.fillMaxWidth()) {
+                Text(
+                    vm.calendarError
+                        ?: "기록을 불러올 수 없어요.",
+                    color = Palette.Coral,
+                    fontSize = 13.sp
+                )
+
+                Text(
+                    "달을 다시 선택하면 재시도할 수 있어요.",
+                    color = Palette.Muted,
+                    fontSize = 12.sp
+                )
+            }
+        } else {
+            MealType.entries.forEach { type ->
+                val typeRecords = dailyRecords.filter {
+                    it.type == type
+                }
+
+                RoundedPanel(Modifier.fillMaxWidth()) {
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            type.label,
+                            fontSize = 14.sp,
+                            color = Palette.Ink,
+                            fontWeight = FontWeight.Bold
+                        )
+
+                        Spacer(Modifier.weight(1f))
+
+                        Text(
+                            if (typeRecords.isEmpty()) {
+                                "미기록"
+                            } else {
+                                "기록됨"
+                            },
+                            fontSize = 11.sp,
+                            color = if (typeRecords.isEmpty()) {
+                                Palette.Muted
+                            } else {
+                                Palette.MintInk
+                            }
+                        )
+                    }
+
+                    Spacer(Modifier.height(8.dp))
+
+                    if (typeRecords.isEmpty()) {
+                        Text(
+                            "기록한 음식이 없어요.",
+                            fontSize = 12.sp,
+                            color = Palette.Muted
+                        )
+                    } else {
+                        typeRecords.forEachIndexed { index, record ->
+                            if (index > 0) {
+                                Spacer(Modifier.height(10.dp))
+                            }
+
+                            Text(
+                                record.foods
+                                    .joinToString(" · ")
+                                    .ifBlank { "음식 정보 없음" },
+                                fontSize = 13.sp,
+                                color = Palette.Body,
+                                lineHeight = 19.sp
+                            )
+
+                            Spacer(Modifier.height(5.dp))
+
+                            Text(
+                                if (record.fromRecommendation) {
+                                    "추천 메뉴 기록"
+                                } else {
+                                    "직접 기록"
+                                },
+                                fontSize = 11.sp,
+                                color = Palette.Muted
+                            )
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
 @Composable
-private fun RecordDialog(onDismiss: () -> Unit, onSave: (MealType, String) -> Unit) {
-    var selectedType by remember { mutableStateOf(MealType.LUNCH) }
-    var food by remember { mutableStateOf("") }
-    Dialog(onDismissRequest = onDismiss) {
-        Surface(color = Palette.White, shape = RoundedCornerShape(28.dp)) {
-            Column(Modifier.fillMaxWidth().padding(22.dp), verticalArrangement = Arrangement.spacedBy(15.dp)) {
-                Text("무엇을 드셨나요?", fontSize = 19.sp, fontWeight = FontWeight.Bold, color = Palette.Ink)
-                Text("직접 먹은 음식을 자유롭게 남겨보세요.", color = Palette.Muted, fontSize = 12.sp)
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    MealType.entries.forEach { type ->
-                        FilterChip(selected = selectedType == type, onClick = { selectedType = type },
-                            label = { Text(type.label, fontSize = 12.sp) },
-                            colors = FilterChipDefaults.filterChipColors(selectedContainerColor = Palette.Lavender,
-                                selectedLabelColor = Palette.Primary))
-                    }
-                }
-                OutlinedTextField(
-                    value = food, onValueChange = { food = it },
-                    label = { Text("음식 이름") }, placeholder = { Text("예: 곱도리탕 1그릇") },
-                    modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(14.dp), singleLine = true,
-                    colors = healtheatTextFieldColors()
-                )
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlineAction("취소", onDismiss, Modifier.weight(1f))
-                    FilledAction("저장하기", { onSave(selectedType, food) }, Modifier.weight(1f), enabled = food.isNotBlank())
+private fun CalendarDay(
+    date: LocalDate,
+    count: Int,
+    selected: Boolean,
+    today: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val shape = RoundedCornerShape(10.dp)
+
+    Column(
+        modifier
+            .aspectRatio(1f)
+            .padding(2.dp)
+            .border(
+                1.dp,
+                if (selected) {
+                    Palette.Primary
+                } else {
+                    Color.Transparent
+                },
+                shape
+            )
+            .background(
+                if (selected) {
+                    Palette.Lavender
+                } else {
+                    Color.Transparent
+                },
+                shape
+            )
+            .clickable(onClick = onClick)
+            .padding(top = 7.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            date.dayOfMonth.toString(),
+            fontSize = 13.sp,
+            fontWeight = if (selected || today) {
+                FontWeight.Bold
+            } else {
+                FontWeight.Normal
+            },
+            color = if (selected) {
+                Palette.Primary
+            } else {
+                Palette.Ink
+            }
+        )
+
+        if (count > 0) {
+            Spacer(Modifier.height(4.dp))
+
+            Row(
+                horizontalArrangement =
+                    Arrangement.spacedBy(3.dp)
+            ) {
+                repeat(count.coerceAtMost(3)) {
+                    Box(
+                        Modifier
+                            .size(4.dp)
+                            .background(
+                                Palette.Primary,
+                                RoundedCornerShape(2.dp)
+                            )
+                    )
                 }
             }
         }
