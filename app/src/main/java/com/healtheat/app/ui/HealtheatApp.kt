@@ -30,7 +30,11 @@ private data class BottomPage(
 )
 
 private val pages = listOf(
-    BottomPage("home", "홈", Icons.Outlined.Home),
+    BottomPage(
+        "home",
+        "홈",
+        Icons.Outlined.Home
+    ),
     BottomPage(
         "records",
         "식사 기록",
@@ -65,17 +69,20 @@ fun HealtheatApp(
     }
 
     var selectedFoodSource by remember {
-        mutableStateOf(SourceType.HOME_COOKED)
+        mutableStateOf(
+            SourceType.HOME_COOKED
+        )
     }
 
     val isMain = pages.any {
         it.route == page
     }
 
-    // 앱 시작 시 로그인 세션 복원
+    // 앱 시작 시 저장된 로그인 세션 복원
     LaunchedEffect(Unit) {
         vm.restoreSession {
-            isInitialOnboarding = vm.profile.age <= 0
+            isInitialOnboarding =
+                vm.profile.age <= 0
 
             page = if (isInitialOnboarding) {
                 "onboarding"
@@ -97,7 +104,9 @@ fun HealtheatApp(
         return
     }
 
+    // 각 탭 진입 시 필요한 서버 정보 갱신
     LaunchedEffect(page, vm.authenticated) {
+
         if (!vm.authenticated && page != "auth") {
             page = "auth"
         }
@@ -110,16 +119,21 @@ fun HealtheatApp(
                 }
 
                 "records" -> {
-                    // 월별 기록은 RecordsScreen에서 조회
+                    // RecordsScreen에서 월별 기록 조회
                 }
 
-                "chat" -> vm.openChat()
+                "chat" -> {
+                    vm.openChat()
+                }
 
-                "profile" -> vm.refreshProfile()
+                "profile" -> {
+                    vm.refreshProfile()
+                }
             }
         }
     }
 
+    // 공통 알림 자동 닫기
     LaunchedEffect(vm.notice) {
         if (vm.notice != null) {
             delay(2700)
@@ -130,7 +144,6 @@ fun HealtheatApp(
     Scaffold(
         containerColor = Palette.Background,
 
-        // 홈 상단에서 건강 설정 버튼 제거
         topBar = {
             if (isMain) {
                 BrandHeader()
@@ -144,7 +157,9 @@ fun HealtheatApp(
                     tonalElevation = 1.dp
                 ) {
                     pages.forEach { item ->
-                        val active = page == item.route
+
+                        val active =
+                            page == item.route
 
                         NavigationBarItem(
                             selected = active,
@@ -189,13 +204,18 @@ fun HealtheatApp(
             }
         }
     ) { padding ->
+
         Box(
-            Modifier
+            modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
         ) {
             when (page) {
-                "home" -> HomeScreen(vm) { food, source ->
+
+                "home" -> HomeScreen(vm) {
+                        food,
+                        source ->
+
                     selectedFood = food
                     selectedFoodSource = source
                 }
@@ -203,7 +223,7 @@ fun HealtheatApp(
                 "records" -> RecordsScreen(vm)
 
                 "chat" -> ChatScreen(
-                    vm,
+                    vm = vm,
                     onGoHome = {
                         page = "home"
                     }
@@ -212,6 +232,7 @@ fun HealtheatApp(
                 "profile" -> ProfileScreen(
                     vm = vm,
                     onOnboarding = {
+                        // 마이페이지에서 시작하는 수정 모드
                         isInitialOnboarding = false
                         page = "onboarding"
                     },
@@ -222,23 +243,41 @@ fun HealtheatApp(
 
                 "onboarding" -> OnboardingScreen(
                     vm = vm,
-                    isInitialSetup = isInitialOnboarding,
+                    isInitialSetup =
+                        isInitialOnboarding,
 
+                    // 마이페이지 수정 모드 뒤로가기
                     onBack = {
                         page = "profile"
                     },
+
+                    // 마이페이지 수정 모드 닫기
                     onClose = {
                         page = "profile"
                     },
+
+                    // 최초 설정 중단
                     onInitialSetupExit = {
                         vm.logout {
                             isInitialOnboarding = false
                             page = "auth"
                         }
                     },
+
+                    // 설정 저장 완료
                     onFinish = {
+                        val wasInitialSetup =
+                            isInitialOnboarding
+
                         isInitialOnboarding = false
-                        page = "home"
+
+                        page = if (wasInitialSetup) {
+                            // 회원가입 직후 최초 설정 완료
+                            "home"
+                        } else {
+                            // 마이페이지에서 정보 수정 완료
+                            "profile"
+                        }
                     }
                 )
 
@@ -249,11 +288,14 @@ fun HealtheatApp(
                             page = "profile"
                         }
                     },
+
                     onAuthenticated = { _ ->
                         isInitialOnboarding =
                             vm.profile.age <= 0
 
-                        page = if (isInitialOnboarding) {
+                        page = if (
+                            isInitialOnboarding
+                        ) {
                             "onboarding"
                         } else {
                             "home"
@@ -262,12 +304,15 @@ fun HealtheatApp(
                 )
             }
 
+            // 화면 하단 알림
             val notice = vm.notice
 
             if (notice != null) {
                 Surface(
                     modifier = Modifier
-                        .align(Alignment.BottomCenter)
+                        .align(
+                            Alignment.BottomCenter
+                        )
                         .padding(
                             horizontal = 22.dp,
                             vertical = 13.dp
@@ -277,11 +322,12 @@ fun HealtheatApp(
                     shadowElevation = 10.dp
                 ) {
                     Row(
-                        Modifier.padding(
+                        modifier = Modifier.padding(
                             horizontal = 17.dp,
                             vertical = 12.dp
                         ),
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment =
+                            Alignment.CenterVertically
                     ) {
                         Icon(
                             Icons.Outlined.CheckCircleOutline,
@@ -290,7 +336,9 @@ fun HealtheatApp(
                             modifier = Modifier.size(19.dp)
                         )
 
-                        Spacer(Modifier.width(10.dp))
+                        Spacer(
+                            Modifier.width(10.dp)
+                        )
 
                         Text(
                             notice,
@@ -303,6 +351,7 @@ fun HealtheatApp(
         }
     }
 
+    // 레시피 상세 팝업
     selectedFood?.let { item ->
         RecipeSheet(
             item = item,
