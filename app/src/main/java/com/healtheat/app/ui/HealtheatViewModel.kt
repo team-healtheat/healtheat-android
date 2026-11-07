@@ -633,6 +633,125 @@ class HealtheatViewModel : ViewModel() {
         }
     }
 
+    /** 기본 정보 PUT은 전체 교체 방식이므로 바꾸지 않은 값도 함께 보존해 전송한다. */
+    fun saveBasicInfo(
+        age: Int,
+        gender: String,
+        onSuccess: () -> Unit = {}
+    ) {
+        if (!authenticated || savingProfile) return
+        if (age !in 1..120) {
+            toast("나이는 1~120세 사이로 입력해 주세요.")
+            return
+        }
+        savingProfile = true
+        viewModelScope.launch {
+            try {
+                ApiClient.prepareMutation()
+                api.saveBasicProfile(
+                    obj(
+                        "age" to age,
+                        "gender" to gender.takeUnless { it == "선택 안 함" }
+                    )
+                ).requireBodyOrNull()
+                profile = profile.copy(age = age, gender = gender)
+                toast("기본 정보가 변경됐어요.")
+                onSuccess()
+            } catch (t: Exception) {
+                report(t)
+            } finally {
+                savingProfile = false
+            }
+        }
+    }
+
+    /** 음식 취향은 PATCH로 해당 필드만 전송하며 다른 설정은 수정하지 않는다. */
+    fun saveFoodPreference(
+        field: String,
+        rawText: String,
+        onSuccess: () -> Unit = {}
+    ) {
+        if (!authenticated || savingProfile) return
+        if (field !in setOf("likedFoods", "dislikedFoods", "dietaryPreferences")) {
+            toast("수정할 수 없는 항목이에요.")
+            return
+        }
+        val values = rawText.split(',')
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
+            .distinct()
+        if (values.size > 50 || values.any { it.length > 200 }) {
+            toast("항목은 최대 50개, 각 항목은 200자 이내로 입력해 주세요.")
+            return
+        }
+        savingProfile = true
+        viewModelScope.launch {
+            try {
+                val valuesJson = JsonArray().apply { values.forEach { add(it) } }
+                ApiClient.prepareMutation()
+                api.savePreferences(obj(field to valuesJson)).requireBodyOrNull()
+                val displayed = values.joinToString(", ")
+                profile = when (field) {
+                    "likedFoods" -> profile.copy(liked = displayed)
+                    "dislikedFoods" -> profile.copy(disliked = displayed)
+                    else -> profile.copy(style = displayed)
+                }
+                toast("음식 취향이 변경됐어요.")
+                onSuccess()
+            } catch (t: Exception) {
+                report(t)
+            } finally {
+                savingProfile = false
+            }
+        }
+    }
+
+    /** 알레르기는 서버 명세대로 상태와 목록을 한 번에 PATCH한다. */
+    fun saveAllergyPreference(
+        status: String,
+        allergens: List<String>,
+        onSuccess: () -> Unit = {}
+    ) {
+        if (!authenticated || savingProfile) return
+        if (status !in setOf("있음", "없음")) {
+            toast("알레르기 유무를 선택해 주세요.")
+            return
+        }
+        val names = if (status == "있음") allergens
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
+            .distinct()
+        else emptyList()
+        if (status == "있음" && names.isEmpty()) {
+            toast("알레르기를 하나 이상 선택해 주세요.")
+            return
+        }
+        if (names.size > 50 || names.any { it.length > 200 }) {
+            toast("알레르기는 최대 50개, 각 항목은 200자 이내로 입력해 주세요.")
+            return
+        }
+        savingProfile = true
+        viewModelScope.launch {
+            try {
+                val namesJson = JsonArray().apply { names.forEach { add(it) } }
+                ApiClient.prepareMutation()
+                api.savePreferences(
+                    obj(
+                        "allergyStatus" to if (status == "있음") "PRESENT" else "NONE",
+                        "allergens" to namesJson
+                    )
+                ).requireBodyOrNull()
+                profile = profile.copy(allergyStatus = status, allergies = names)
+                toast("알레르기 정보가 변경됐어요.")
+                onSuccess()
+            } catch (t: Exception) {
+                report(t)
+            } finally {
+                savingProfile = false
+            }
+        }
+    }
+
     fun updateDiningOut(value: Boolean) {
         viewModelScope.launch {
             try {
@@ -677,7 +796,7 @@ class HealtheatViewModel : ViewModel() {
         allActive.forEach { factor ->
             val previous = profile.factors.firstOrNull {
                 it.label.equals(factor.label.trim(), ignoreCase = true) &&
-                    it.type.equals(factor.type.trim(), ignoreCase = true)
+                        it.type.equals(factor.type.trim(), ignoreCase = true)
             }
             payload.add(obj(
                 "factorId" to (previous?.id ?: factor.id).takeIf { it > 0 },
