@@ -49,6 +49,10 @@ fun ProfileScreen(
     var deletePassword by remember {
         mutableStateOf("")
     }
+    var showHealthDialog by remember { mutableStateOf(false) }
+    val selectedHealth = remember { mutableStateListOf<String>() }
+    var otherHealth by remember { mutableStateOf("") }
+    var noHealth by remember { mutableStateOf(false) }
 
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -141,7 +145,13 @@ fun ProfileScreen(
                     modifier = Modifier.weight(1f)
                 )
 
-                TextButton(onClick = onOnboarding) {
+                TextButton(onClick = {
+                    selectedHealth.clear()
+                    selectedHealth.addAll(activeDiagnosisNames(profile.factors))
+                    otherHealth = ""
+                    noHealth = selectedHealth.isEmpty()
+                    showHealthDialog = true
+                }) {
                     Text(
                         "수정하기",
                         fontSize = 11.sp,
@@ -178,11 +188,6 @@ fun ProfileScreen(
                             fontSize = 12.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = Palette.Ink
-                        )
-                        Text(
-                            factor.status,
-                            fontSize = 10.sp,
-                            color = Palette.Muted
                         )
                     }
 
@@ -299,6 +304,109 @@ fun ProfileScreen(
                 deletePassword = ""
                 vm.clearDeleteAccountError()
                 showDeleteDialog = true
+            }
+        }
+    }
+
+    // 건강요인 전용 편집: 회원가입의 다섯 단계 화면으로 이동하지 않는다.
+    if (showHealthDialog) {
+        Dialog(onDismissRequest = { if (!vm.savingProfile) showHealthDialog = false }) {
+            Surface(
+                modifier = Modifier.fillMaxWidth().imePadding(),
+                shape = RoundedCornerShape(18.dp),
+                color = Palette.White,
+                shadowElevation = 10.dp
+            ) {
+                Column(Modifier.fillMaxWidth()) {
+                    Row(
+                        Modifier.fillMaxWidth().padding(start = 22.dp, end = 10.dp, top = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            "진단받은 질환 수정",
+                            modifier = Modifier.weight(1f),
+                            fontSize = 19.sp, fontWeight = FontWeight.Bold,
+                            color = Palette.Ink
+                        )
+                        IconButton(
+                            onClick = { showHealthDialog = false },
+                            enabled = !vm.savingProfile
+                        ) {
+                            Icon(Icons.Outlined.Close, contentDescription = "닫기", tint = Palette.Muted)
+                        }
+                    }
+                    Column(
+                        Modifier
+                            .heightIn(max = 480.dp)
+                            .verticalScroll(rememberScrollState())
+                            .padding(horizontal = 21.dp)
+                    ) {
+                        Text(
+                            "체크를 해제한 질환은 저장 후 비활성화돼요.",
+                            fontSize = 12.sp,
+                            color = Palette.Muted
+                        )
+                        Spacer(Modifier.height(15.dp))
+                        HealthFactorSelector(
+                            selected = selectedHealth.toList(),
+                            onToggle = { name ->
+                                noHealth = false
+                                if (name in selectedHealth) selectedHealth.remove(name)
+                                else selectedHealth.add(name)
+                            },
+                            other = otherHealth,
+                            onOtherChanged = {
+                                otherHealth = it.take(200)
+                                if (it.isNotBlank()) noHealth = false
+                            },
+                            noneSelected = noHealth,
+                            onNoneSelected = {
+                                noHealth = !noHealth
+                                if (noHealth) { selectedHealth.clear(); otherHealth = "" }
+                            },
+                            onKeyboardDone = {
+                                focusManager.clearFocus()
+                                keyboardController?.hide()
+                            }
+                        )
+                    }
+                    HorizontalDivider(color = Palette.Border)
+                    Row(
+                        Modifier.fillMaxWidth().padding(16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(9.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = { showHealthDialog = false },
+                            enabled = !vm.savingProfile,
+                            modifier = Modifier.weight(1f).height(46.dp)
+                        ) { Text("취소") }
+                        Button(
+                            onClick = {
+                                focusManager.clearFocus()
+                                keyboardController?.hide()
+                                if (!noHealth && selectedHealth.isEmpty() && otherHealth.isBlank()) {
+                                    vm.toast("질환을 선택하거나 '없음'을 선택해 주세요.")
+                                } else {
+                                    vm.saveSelectedHealthFactors(
+                                        selectedDiagnosisFactors(
+                                            selectedHealth.toList(), otherHealth, noHealth,
+                                            profile.factors
+                                        )
+                                    ) { showHealthDialog = false }
+                                }
+                            },
+                            enabled = !vm.savingProfile,
+                            modifier = Modifier.weight(1.5f).height(46.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Palette.Primary)
+                        ) {
+                            if (vm.savingProfile) {
+                                CircularProgressIndicator(
+                                    Modifier.size(17.dp), color = Palette.White, strokeWidth = 2.dp
+                                )
+                            } else Text("변경사항 저장")
+                        }
+                    }
+                }
             }
         }
     }

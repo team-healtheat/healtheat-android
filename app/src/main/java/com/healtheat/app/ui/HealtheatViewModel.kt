@@ -44,7 +44,7 @@ import java.time.ZoneId
 
 /** Real network ViewModel. No fake responses are shown when API calls fail. */
 class HealtheatViewModel : ViewModel() {
-    private enum class GuidedChatIntent { FOOD_SAFETY, HEALTH_INFO, FOOD_FREQUENCY, MEAL_RECOMMENDATION }
+    private enum class GuidedChatIntent { FOOD_SAFETY, FOOD_FREQUENCY }
 
     val today: LocalDate get() = LocalDate.now(ZoneId.of("Asia/Seoul"))
     private val api = ApiClient.service
@@ -97,7 +97,6 @@ class HealtheatViewModel : ViewModel() {
     val meals = mutableStateMapOf<MealType, Meal>()
     val previousRecommendations = mutableStateListOf<Meal>()
     val records = mutableStateListOf<MealRecord>()
-
     val calendarRecords = mutableStateListOf<MealRecord>()
     var calendarLoading by mutableStateOf(false)
         private set
@@ -114,8 +113,8 @@ class HealtheatViewModel : ViewModel() {
     private var guidedFoodName: String? = null
     private var pendingChatExampleIndex: Int? = null
 
-    private var nextLocalId = 100000L
-    private fun nextId(): Long = ++nextLocalId
+    private var nextLocalId = -1L
+    private fun nextId(): Long = nextLocalId--
 
     private fun clearAccountData() {
         profile = UserProfile()
@@ -170,7 +169,20 @@ class HealtheatViewModel : ViewModel() {
             authenticated = false
             ApiClient.clearSession()
         }
-        toast(t.message ?: "네트워크 연결을 확인해 주세요")
+        val friendly = when (t) {
+            is ApiException -> when (t.statusCode) {
+                400 -> "입력한 내용을 확인해 주세요."
+                401 -> "로그인이 만료됐어요. 다시 로그인해 주세요."
+                403 -> "요청을 처리할 수 없어요. 다시 시도해 주세요."
+                404 -> "요청한 정보를 찾지 못했어요."
+                409 -> "이미 등록된 내용이 있어요. 확인해 주세요."
+                429 -> "요청이 많아요. 잠시 후 다시 시도해 주세요."
+                in 500..599 -> "서버가 응답하지 않아요. 잠시 후 다시 시도해 주세요."
+                else -> "요청에 실패했어요. 다시 시도해 주세요."
+            }
+            else -> "연결 상태를 확인하고 다시 시도해 주세요."
+        }
+        toast(friendly)
     }
 
     fun authenticate(
@@ -192,7 +204,7 @@ class HealtheatViewModel : ViewModel() {
             return
         }
         if (signup && password.length !in 8..72) {
-            toast("비밀번호는 8~72자로 입력해 주세요"); return
+            toast("비밀번호는 8자 이상 입력해 주세요."); return
         }
 
         if (signup && password != confirm) {
@@ -241,7 +253,16 @@ class HealtheatViewModel : ViewModel() {
                 toast("${if (signup) "가입하고 " else ""}로그인했어요")
                 onSuccess()
             } catch (t: Exception) {
-                report(t)
+                if (t is CancellationException) throw t
+                if (t is ApiException) {
+                    when {
+                        signup && t.statusCode == 409 ->
+                            toast("이미 사용 중인 이메일입니다.")
+                        !signup && (t.statusCode == 400 || t.statusCode == 401) ->
+                            toast("이메일 또는 비밀번호를 확인해 주세요.")
+                        else -> report(t)
+                    }
+                } else report(t)
             } finally {
                 authBusy = false
             }
@@ -642,6 +663,57 @@ class HealtheatViewModel : ViewModel() {
         }
     }
 
+    private fun healthFactorPayload(choices: List<HealthFactor>): JsonObject {
+        // The server PUT replaces the active set. Keep unrelated factor types active,
+        // and let deselected diagnoses become inactive by omitting them.
+        val unrelated = profile.factors.filter {
+            it.isActive && !it.type.equals("DIAGNOSIS", ignoreCase = true)
+        }
+        val activeDiagnoses = choices.filter { it.isActive }
+        val allActive = (unrelated + activeDiagnoses).distinctBy {
+            it.label.trim() to it.type.trim()
+        }
+        val payload = JsonArray()
+        allActive.forEach { factor ->
+            val previous = profile.factors.firstOrNull {
+                it.label.equals(factor.label.trim(), ignoreCase = true) &&
+                    it.type.equals(factor.type.trim(), ignoreCase = true)
+            }
+            payload.add(obj(
+                "factorId" to (previous?.id ?: factor.id).takeIf { it > 0 },
+                "name" to factor.label.trim(),
+                "type" to factor.type,
+                "reportedStatus" to factor.status.ifBlank { "진단 받음" },
+                "originalText" to factor.originalText.takeIf { it.isNotBlank() },
+                "active" to true
+            ))
+        }
+        return obj("factors" to payload)
+    }
+
+    /** 마이페이지의 건강요인 편집만 수행하며 나이·알레르기·취향은 변경하지 않는다. */
+    fun saveSelectedHealthFactors(
+        factors: List<HealthFactor>,
+        onSuccess: () -> Unit = {}
+    ) {
+        if (!authenticated || savingProfile) return
+        savingProfile = true
+        viewModelScope.launch {
+            try {
+                ApiClient.prepareMutation()
+                val saved = api.saveHealth(healthFactorPayload(factors))
+                    .requireBodyOrNull().toHealthFactors()
+                profile = profile.copy(factors = saved)
+                toast("건강 요인이 변경됐어요.")
+                onSuccess()
+            } catch (t: Exception) {
+                report(t)
+            } finally {
+                savingProfile = false
+            }
+        }
+    }
+
     fun updateProfile(
         age: Int, gender: String, diningOut: Boolean, healthText: String,
         allergies: List<String>, allergyStatus: String, liked: String, disliked: String,
@@ -679,30 +751,11 @@ class HealtheatViewModel : ViewModel() {
                             .filter { it.isNotEmpty() })
                     )
                 ).requireBodyOrNull()
-                if (healthText.isNotBlank()) {
-                    // PUT is a full replacement: preserve existing factors unless explicitly changed.
-                    // The backend PUT is full replacement; retain active AND inactive factors.
-                    // Distinguish same names with different factor types. New confirmed factors override matches.
-                    val combined = (profile.factors + factors)
-                        .associateBy { it.label.trim().lowercase() to it.type.trim().lowercase() }
-                        .values.toList()
-                    val candidates = JsonArray().apply {
-                        combined.forEach { f ->
-                            add(
-                                obj(
-                                    "factorId" to f.id.takeIf { it > 0 },
-                                    "name" to f.label,
-                                    "type" to f.type,
-                                    "reportedStatus" to f.status,
-                                    "originalText" to f.originalText.takeIf { it.isNotBlank() },
-                                    "active" to f.isActive
-                                )
-                            )
-                        }
-                    }
-                    ApiClient.prepareMutation()
-                    api.saveHealth(obj("factors" to candidates)).requireBodyOrNull()
-                }
+                // 기존 AI 추출 대신 이용자가 선택한 질환의 전체 활성 목록을 저장.
+                // 빈 목록(없음)은 기존 항목 전체를 비활성화한다.
+                ApiClient.prepareMutation()
+                val savedFactors = api.saveHealth(healthFactorPayload(factors))
+                    .requireBodyOrNull().toHealthFactors()
                 profile = profile.copy(
                     age = age,
                     gender = gender,
@@ -712,14 +765,10 @@ class HealtheatViewModel : ViewModel() {
                     liked = liked,
                     disliked = disliked,
                     style = style,
-                    factors = if (healthText.isNotBlank())
-                        (profile.factors + factors).associateBy {
-                            it.label.trim().lowercase() to it.type.trim().lowercase()
-                        }.values.toList()
-                    else profile.factors
+                    factors = savedFactors
                 )
                 refreshProfile()
-                toast("건강 프로필을 서버에 저장했어요")
+                toast("건강 정보가 저장됐어요.")
                 onSuccess()
             } catch (t: Exception) {
                 report(t)
@@ -753,12 +802,16 @@ class HealtheatViewModel : ViewModel() {
                 val session = api.startChat().requireBodyOrNull().chatSessionId()
                     ?: throw IllegalArgumentException("채팅 응답에서 sessionId를 찾지 못했어요")
                 sessionId = session
-                val history = api.chatHistory(session).requireBodyOrNull().chatMessages()
+                val history = try {
+                    api.chatHistory(session).requireBodyOrNull().chatMessages()
+                } catch (_: Exception) {
+                    emptyList()
+                }
                 messages.clear(); messages.addAll(history)
                 if (history.isEmpty()) messages.add(
                     ChatMessage(
                         nextId(), false,
-                        "안녕하세요! 음식 상담, 식사 횟수 조회, 건강정보 변경, 식단 재추천을 도와드릴게요."
+                        "안녕하세요! 음식에 대한 궁금증이나 식사 기록을 편하게 물어보세요."
                     )
                 )
                 pendingChatExampleIndex?.let { index ->
@@ -783,9 +836,7 @@ class HealtheatViewModel : ViewModel() {
         if (sending) return
         val intentAndPrompt = when (index) {
             0 -> GuidedChatIntent.FOOD_SAFETY to "어떤 음식을 먹어도 되는지 궁금하신가요? 음식 이름을 알려주세요!"
-            1 -> GuidedChatIntent.HEALTH_INFO to "어떤 건강정보를 변경하고 싶으신가요?"
-            2 -> GuidedChatIntent.FOOD_FREQUENCY to "확인할 음식 이름을 알려주세요!"
-            3 -> GuidedChatIntent.MEAL_RECOMMENDATION to "아침·점심·저녁 중 어떤 끼니를 다시 추천받고 싶으신가요?"
+            1 -> GuidedChatIntent.FOOD_FREQUENCY to "확인할 음식 이름을 알려주세요!"
             else -> return
         }
         guidedChatIntent = intentAndPrompt.first
@@ -814,7 +865,7 @@ class HealtheatViewModel : ViewModel() {
                     ChatMessage(
                         nextId(),
                         false,
-                        "전송 실패: ${t.message ?: "서버 연결을 확인해 주세요"}"
+                        "답변을 받지 못했어요. 잠시 후 다시 시도해 주세요."
                     )
                 )
                 if (t is ApiException && t.statusCode == 410) {
@@ -835,11 +886,6 @@ class HealtheatViewModel : ViewModel() {
             "${input}${objectParticle(input)} 먹어도 될까?"
         }
 
-        GuidedChatIntent.HEALTH_INFO -> {
-            clearGuidedChat()
-            "건강정보를 ${input}(으)로 바꾸고 싶어."
-        }
-
         GuidedChatIntent.FOOD_FREQUENCY -> {
             val food = guidedFoodName
             if (food == null) {
@@ -858,16 +904,6 @@ class HealtheatViewModel : ViewModel() {
             }
         }
 
-        GuidedChatIntent.MEAL_RECOMMENDATION -> {
-            val meal = listOf("아침", "점심", "저녁").firstOrNull { input.contains(it) }
-            if (meal == null) {
-                messages.add(ChatMessage(nextId(), false, "아침, 점심, 저녁 중 하나를 알려주세요!"))
-                null
-            } else {
-                clearGuidedChat()
-                "${meal} 식단을 다시 추천해 줘."
-            }
-        }
     }
 
     private fun objectParticle(word: String): String {
@@ -889,7 +925,7 @@ class HealtheatViewModel : ViewModel() {
                 ApiClient.prepareMutation()
                 api.endChat(id).requireBodyOrNull()
                 sessionId = null; messages.clear(); clearGuidedChat()
-                toast("채팅을 종료하고 대화 내역을 삭제했어요")
+                toast("채팅을 종료했습니다.")
             } catch (t: Exception) {
                 report(t)
             }
