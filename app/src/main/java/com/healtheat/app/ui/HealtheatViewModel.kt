@@ -1,6 +1,8 @@
 package com.healtheat.app.ui
 
+import android.os.Build
 import android.util.Patterns
+import androidx.annotation.RequiresApi
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
@@ -46,7 +48,8 @@ import java.time.ZoneId
 class HealtheatViewModel : ViewModel() {
     private enum class GuidedChatIntent { FOOD_SAFETY, FOOD_FREQUENCY }
 
-    val today: LocalDate get() = LocalDate.now(ZoneId.of("Asia/Seoul"))
+    val today: LocalDate
+    get() = LocalDate.now(ZoneId.of("Asia/Seoul"))
     private val api = ApiClient.service
 
     var authenticated by mutableStateOf(false)

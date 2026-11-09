@@ -71,13 +71,13 @@ fun RecordsScreen(vm: HealtheatViewModel) {
                     month = month.minusMonths(1)
                     selectedDate = month.atDay(1)
                 }) {
-                    Icon(Icons.Outlined.KeyboardArrowLeft, contentDescription = "이전 달", tint = Palette.Ink)
+                    Icon(Icons.Outlined.KeyboardArrowLeft, contentDescription = "이전 달", tint = Palette.TextPrimary)
                 }
                 Text(
                     "${month.year}년 ${month.monthValue}월",
                     fontWeight = FontWeight.Bold,
                     fontSize = 17.sp,
-                    color = Palette.Ink
+                    color = Palette.TextPrimary
                 )
                 IconButton(
                     onClick = {
@@ -89,7 +89,7 @@ fun RecordsScreen(vm: HealtheatViewModel) {
                     Icon(
                         Icons.Outlined.KeyboardArrowRight,
                         contentDescription = "다음 달",
-                        tint = if (month < YearMonth.from(vm.today)) Palette.Ink else Palette.Border
+                        tint = if (month < YearMonth.from(vm.today)) Palette.TextPrimary else Palette.Border
                     )
                 }
             }
@@ -102,7 +102,7 @@ fun RecordsScreen(vm: HealtheatViewModel) {
                         Text(
                             label,
                             fontSize = 11.sp,
-                            color = if (index == 0) Palette.Coral else Palette.Muted
+                            color = if (index == 0) Palette.Warning else Palette.TextMuted
                         )
                     }
                 }
@@ -140,8 +140,8 @@ fun RecordsScreen(vm: HealtheatViewModel) {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("기록한 날짜 ${grouped.size}일", fontSize = 12.sp, color = Palette.Muted)
-                Text("총 ${records.size}끼", fontSize = 12.sp, color = Palette.Muted)
+                Text("기록한 날짜 ${grouped.size}일", fontSize = 12.sp, color = Palette.TextMuted)
+                Text("총 ${records.size}끼", fontSize = 12.sp, color = Palette.TextMuted)
             }
         }
 
@@ -150,10 +150,10 @@ fun RecordsScreen(vm: HealtheatViewModel) {
                 selectedDate.format(DateTimeFormatter.ofPattern("M월 d일 EEEE", Locale.KOREAN)),
                 fontSize = 17.sp,
                 fontWeight = FontWeight.Bold,
-                color = Palette.Ink,
+                color = Palette.TextPrimary,
                 modifier = Modifier.weight(1f)
             )
-            Text("${dailyRecords.size}건", color = Palette.Muted, fontSize = 12.sp)
+            Text("${dailyRecords.size}건", color = Palette.TextMuted, fontSize = 12.sp)
         }
 
         if (vm.calendarLoading) {
@@ -162,30 +162,30 @@ fun RecordsScreen(vm: HealtheatViewModel) {
             }
         } else if (vm.calendarError != null) {
             RoundedPanel(Modifier.fillMaxWidth()) {
-                Text(vm.calendarError ?: "기록을 불러올 수 없어요.", color = Palette.Coral, fontSize = 13.sp)
-                Text("달을 다시 선택하면 재시도할 수 있어요.", color = Palette.Muted, fontSize = 12.sp)
+                Text(vm.calendarError ?: "기록을 불러올 수 없어요.", color = Palette.Danger, fontSize = 13.sp)
+                Text("달을 다시 선택하면 재시도할 수 있어요.", color = Palette.TextMuted, fontSize = 12.sp)
             }
         } else {
             MealType.entries.forEach { type ->
                 val typeRecords = dailyRecords.filter { it.type == type }
                 RoundedPanel(Modifier.fillMaxWidth()) {
                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                        Text(type.label, fontSize = 14.sp, color = Palette.Ink, fontWeight = FontWeight.Bold)
+                        Text(type.label, fontSize = 14.sp, color = Palette.TextPrimary, fontWeight = FontWeight.Bold)
                         Spacer(Modifier.weight(1f))
                         Text(if (typeRecords.isEmpty()) "미기록" else "기록됨", fontSize = 11.sp,
-                            color = if (typeRecords.isEmpty()) Palette.Muted else Palette.MintInk)
+                            color = if (typeRecords.isEmpty()) Palette.TextMuted else Palette.MintInk)
                     }
                     Spacer(Modifier.height(8.dp))
                     if (typeRecords.isEmpty()) {
-                        Text("기록한 음식이 없어요.", fontSize = 12.sp, color = Palette.Muted)
+                        Text("기록한 음식이 없어요.", fontSize = 12.sp, color = Palette.TextMuted)
                     } else {
                         typeRecords.forEachIndexed { index, record ->
                             if (index > 0) Spacer(Modifier.height(10.dp))
                             Text(record.foods.joinToString(" · ").ifBlank { "음식 정보 없음" },
-                                fontSize = 13.sp, color = Palette.Body, lineHeight = 19.sp)
+                                fontSize = 13.sp, color = Palette.TextBody, lineHeight = 19.sp)
                             Spacer(Modifier.height(5.dp))
                             Text(if (record.fromRecommendation) "추천 메뉴 기록" else "직접 기록",
-                                fontSize = 11.sp, color = Palette.Muted)
+                                fontSize = 11.sp, color = Palette.TextMuted)
                         }
                     }
                 }
@@ -208,8 +208,23 @@ private fun CalendarDay(
         modifier
             .aspectRatio(1f)
             .padding(2.dp)
-            .border(1.dp, if (selected) Palette.Primary else Color.Transparent, shape)
-            .background(if (selected) Palette.Lavender else Color.Transparent, shape)
+            .border(
+                1.dp,
+                when {
+                    selected -> Palette.Primary
+                    today -> Palette.Secondary
+                    else -> Color.Transparent
+                },
+                shape
+            )
+            .background(
+                when {
+                    selected -> Palette.Primary
+                    today -> Palette.PrimaryContainer
+                    else -> Color.Transparent
+                },
+                shape
+            )
             .clickable(onClick = onClick)
             .padding(top = 7.dp),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -218,13 +233,13 @@ private fun CalendarDay(
             date.dayOfMonth.toString(),
             fontSize = 13.sp,
             fontWeight = if (selected || today) FontWeight.Bold else FontWeight.Normal,
-            color = if (selected) Palette.Primary else Palette.Ink
+            color = if (selected) Palette.Surface else if (today) Palette.Primary else Palette.TextPrimary
         )
         if (count > 0) {
             Spacer(Modifier.height(4.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
                 repeat(count.coerceAtMost(3)) {
-                    Box(Modifier.size(4.dp).background(Palette.Primary, RoundedCornerShape(2.dp)))
+                    Box(Modifier.size(4.dp).background(if (selected) Palette.Mint else Palette.Primary, RoundedCornerShape(2.dp)))
                 }
             }
         }

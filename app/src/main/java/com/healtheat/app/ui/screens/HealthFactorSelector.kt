@@ -79,13 +79,13 @@ fun HealthFactorSelector(
         "진단받은 질환을 선택해 주세요",
         fontSize = 14.sp,
         fontWeight = FontWeight.Bold,
-        color = Palette.Ink
+        color = Palette.TextPrimary
     )
     Spacer(Modifier.height(5.dp))
     Text(
         "여러 개를 선택할 수 있어요. 해당하는 질환이 없다면 '없음'을 선택해 주세요.",
         fontSize = 12.sp,
-        color = Palette.Muted
+        color = Palette.TextMuted
     )
     Spacer(Modifier.height(12.dp))
     diagnosedConditions.forEach { name ->
@@ -99,7 +99,7 @@ fun HealthFactorSelector(
                 onCheckedChange = { onToggle(name) },
                 colors = CheckboxDefaults.colors(checkedColor = Palette.Primary)
             )
-            Text(name, fontSize = 13.sp, color = Palette.Ink)
+            Text(name, fontSize = 13.sp, color = Palette.TextPrimary)
         }
     }
     selected.filter { it !in diagnosedConditions }.forEach { name ->
@@ -107,7 +107,7 @@ fun HealthFactorSelector(
             horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Checkbox(checked = !noneSelected, onCheckedChange = { onToggle(name) },
                 colors = CheckboxDefaults.colors(checkedColor = Palette.Primary))
-            Text(name, fontSize = 13.sp, color = Palette.Ink)
+            Text(name, fontSize = 13.sp, color = Palette.TextPrimary)
         }
     }
     HorizontalDivider(color = Palette.Border)
@@ -118,7 +118,7 @@ fun HealthFactorSelector(
             onCheckedChange = { onNoneSelected() },
             colors = CheckboxDefaults.colors(checkedColor = Palette.Primary)
         )
-        Text("없음", fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = Palette.Ink)
+        Text("없음", fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = Palette.TextPrimary)
     }
     Spacer(Modifier.height(9.dp))
     OutlinedTextField(

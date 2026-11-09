@@ -112,7 +112,7 @@ fun ProfileScreen(
                     Modifier
                         .size(56.dp)
                         .background(
-                            Palette.Lavender,
+                            Palette.PrimaryContainer,
                             RoundedCornerShape(14.dp)
                         ),
                     contentAlignment = Alignment.Center
@@ -133,7 +133,7 @@ fun ProfileScreen(
                             "${profile.name}님",
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Palette.Ink,
+                            color = Palette.TextPrimary,
                             modifier = Modifier.weight(1f)
                         )
 
@@ -158,7 +158,7 @@ fun ProfileScreen(
                     Text(
                         profile.email,
                         fontSize = 11.sp,
-                        color = Palette.Muted
+                        color = Palette.TextMuted
                     )
                 }
             }
@@ -166,7 +166,7 @@ fun ProfileScreen(
 
         // 기본 정보도 회원가입 전체 과정 대신 각 항목만 수정한다.
         RoundedPanel(Modifier.fillMaxWidth()) {
-            Text("기본 정보", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Palette.Ink)
+            Text("기본 정보", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Palette.TextPrimary)
             Spacer(Modifier.height(10.dp))
             PreferenceRow("나이", if (profile.age > 0) "${profile.age}세" else "미입력") {
                 openBasicEditor("age")
@@ -184,7 +184,7 @@ fun ProfileScreen(
             ) {
                 Text(
                     "나의 건강 요인",
-                    color = Palette.Ink,
+                    color = Palette.TextPrimary,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.weight(1f)
@@ -210,7 +210,7 @@ fun ProfileScreen(
             if (active.isEmpty()) {
                 Text(
                     "현재 등록된 건강 요인이 없어요",
-                    color = Palette.Muted,
+                    color = Palette.TextMuted,
                     fontSize = 12.sp
                 )
             }
@@ -232,7 +232,7 @@ fun ProfileScreen(
                             factor.label,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color = Palette.Ink
+                            color = Palette.TextPrimary
                         )
                     }
 
@@ -255,7 +255,7 @@ fun ProfileScreen(
                         "배달 · 외식 추천",
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Palette.Ink
+                        color = Palette.TextPrimary
                     )
 
                     Spacer(Modifier.height(4.dp))
@@ -263,7 +263,7 @@ fun ProfileScreen(
                     Text(
                         "허용 시 하루 최대 1끼 추천",
                         fontSize = 11.sp,
-                        color = Palette.Muted
+                        color = Palette.TextMuted
                     )
                 }
 
@@ -272,7 +272,7 @@ fun ProfileScreen(
                     onCheckedChange = vm::updateDiningOut,
                     colors = SwitchDefaults.colors(
                         checkedTrackColor = Palette.Primary,
-                        checkedThumbColor = Palette.White
+                        checkedThumbColor = Palette.Surface
                     )
                 )
             }
@@ -284,7 +284,7 @@ fun ProfileScreen(
                 "알레르기 & 음식 취향",
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Bold,
-                color = Palette.Ink
+                color = Palette.TextPrimary
             )
 
             Spacer(Modifier.height(12.dp))
@@ -346,14 +346,14 @@ fun ProfileScreen(
             Surface(
                 modifier = Modifier.fillMaxWidth().imePadding(),
                 shape = RoundedCornerShape(18.dp),
-                color = Palette.White
+                color = Palette.Surface
             ) {
                 Column(Modifier.padding(22.dp)) {
                     Text(
                         if (field == "age") "나이 수정" else "성별 수정",
                         fontSize = 19.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Palette.Ink
+                        color = Palette.TextPrimary
                     )
                     Spacer(Modifier.height(16.dp))
                     if (field == "age") {
@@ -389,7 +389,7 @@ fun ProfileScreen(
                                     colors = RadioButtonDefaults.colors(selectedColor = Palette.Primary)
                                 )
                                 Spacer(Modifier.width(8.dp))
-                                Text(option, color = Palette.Ink)
+                                Text(option, color = Palette.TextPrimary)
                             }
                         }
                     }
@@ -432,7 +432,7 @@ fun ProfileScreen(
             Surface(
                 modifier = Modifier.fillMaxWidth().imePadding(),
                 shape = RoundedCornerShape(18.dp),
-                color = Palette.White,
+                color = Palette.Surface,
                 shadowElevation = 10.dp
             ) {
                 Column(Modifier.fillMaxWidth().padding(20.dp)) {
@@ -441,7 +441,7 @@ fun ProfileScreen(
                             "$label 수정",
                             fontSize = 19.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Palette.Ink,
+                            color = Palette.TextPrimary,
                             modifier = Modifier.weight(1f)
                         )
                         IconButton(
@@ -459,7 +459,7 @@ fun ProfileScreen(
                             Text(
                                 "알레르기가 있다면 해당 항목을 선택해 주세요.",
                                 fontSize = 12.sp,
-                                color = Palette.Muted
+                                color = Palette.TextMuted
                             )
                             Spacer(Modifier.height(8.dp))
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -469,7 +469,7 @@ fun ProfileScreen(
                                         onClick = { allergyStatusInput = option },
                                         label = { Text(option) },
                                         colors = FilterChipDefaults.filterChipColors(
-                                            selectedContainerColor = Palette.Lavender
+                                            selectedContainerColor = Palette.PrimaryContainer
                                         )
                                     )
                                 }
@@ -497,7 +497,7 @@ fun ProfileScreen(
                                                     },
                                                     label = { Text(item, fontSize = 11.sp) },
                                                     colors = FilterChipDefaults.filterChipColors(
-                                                        selectedContainerColor = Palette.Peach
+                                                        selectedContainerColor = Palette.WarningContainer
                                                     )
                                                 )
                                             }
@@ -524,7 +524,7 @@ fun ProfileScreen(
                                 "음식이나 취향을 쉼표(,)로 구분해서 입력해 주세요. 빈칸으로 저장하면 해당 항목만 지워져요.",
                                 fontSize = 12.sp,
                                 lineHeight = 18.sp,
-                                color = Palette.Muted
+                                color = Palette.TextMuted
                             )
                             Spacer(Modifier.height(13.dp))
                             OutlinedTextField(
@@ -579,7 +579,7 @@ fun ProfileScreen(
                         ) {
                             if (vm.savingProfile) {
                                 CircularProgressIndicator(
-                                    Modifier.size(17.dp), color = Palette.White, strokeWidth = 2.dp
+                                    Modifier.size(17.dp), color = Palette.Surface, strokeWidth = 2.dp
                                 )
                             } else Text("변경사항 저장")
                         }
@@ -595,7 +595,7 @@ fun ProfileScreen(
             Surface(
                 modifier = Modifier.fillMaxWidth().imePadding(),
                 shape = RoundedCornerShape(18.dp),
-                color = Palette.White,
+                color = Palette.Surface,
                 shadowElevation = 10.dp
             ) {
                 Column(Modifier.fillMaxWidth()) {
@@ -607,13 +607,13 @@ fun ProfileScreen(
                             "진단받은 질환 수정",
                             modifier = Modifier.weight(1f),
                             fontSize = 19.sp, fontWeight = FontWeight.Bold,
-                            color = Palette.Ink
+                            color = Palette.TextPrimary
                         )
                         IconButton(
                             onClick = { showHealthDialog = false },
                             enabled = !vm.savingProfile
                         ) {
-                            Icon(Icons.Outlined.Close, contentDescription = "닫기", tint = Palette.Muted)
+                            Icon(Icons.Outlined.Close, contentDescription = "닫기", tint = Palette.TextMuted)
                         }
                     }
                     Column(
@@ -625,7 +625,7 @@ fun ProfileScreen(
                         Text(
                             "체크를 해제한 질환은 저장 후 비활성화돼요.",
                             fontSize = 12.sp,
-                            color = Palette.Muted
+                            color = Palette.TextMuted
                         )
                         Spacer(Modifier.height(15.dp))
                         HealthFactorSelector(
@@ -682,7 +682,7 @@ fun ProfileScreen(
                         ) {
                             if (vm.savingProfile) {
                                 CircularProgressIndicator(
-                                    Modifier.size(17.dp), color = Palette.White, strokeWidth = 2.dp
+                                    Modifier.size(17.dp), color = Palette.Surface, strokeWidth = 2.dp
                                 )
                             } else Text("변경사항 저장")
                         }
@@ -712,7 +712,7 @@ fun ProfileScreen(
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(18.dp),
-                color = Palette.White,
+                color = Palette.Surface,
                 shadowElevation = 10.dp
             ) {
                 Column(
@@ -727,7 +727,7 @@ fun ProfileScreen(
                             "닉네임 변경",
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Palette.Ink,
+                            color = Palette.TextPrimary,
                             modifier = Modifier.weight(1f)
                         )
 
@@ -739,7 +739,7 @@ fun ProfileScreen(
                             Icon(
                                 Icons.Outlined.Close,
                                 contentDescription = "닫기",
-                                tint = Palette.Muted
+                                tint = Palette.TextMuted
                             )
                         }
                     }
@@ -750,7 +750,7 @@ fun ProfileScreen(
                         "앱에서 사용할 이름을 변경할 수 있어요.",
                         fontSize = 13.sp,
                         lineHeight = 20.sp,
-                        color = Palette.Muted
+                        color = Palette.TextMuted
                     )
 
                     Spacer(Modifier.height(24.dp))
@@ -759,7 +759,7 @@ fun ProfileScreen(
                         "새 닉네임",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = Palette.Ink
+                        color = Palette.TextPrimary
                     )
 
                     Spacer(Modifier.height(8.dp))
@@ -800,7 +800,7 @@ fun ProfileScreen(
                         Text(
                             "${nicknameInput.length}/50자",
                             fontSize = 11.sp,
-                            color = Palette.Muted
+                            color = Palette.TextMuted
                         )
                     }
 
@@ -877,7 +877,7 @@ fun ProfileScreen(
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(18.dp),
-                color = Palette.White,
+                color = Palette.Surface,
                 shadowElevation = 10.dp
             ) {
                 Column(
@@ -889,7 +889,7 @@ fun ProfileScreen(
                         "계정을 삭제할까요?",
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Palette.Ink
+                        color = Palette.TextPrimary
                     )
 
                     Spacer(Modifier.height(10.dp))
@@ -899,7 +899,7 @@ fun ProfileScreen(
                                 "계속하려면 현재 비밀번호를 입력해 주세요.",
                         fontSize = 13.sp,
                         lineHeight = 20.sp,
-                        color = Palette.Muted
+                        color = Palette.TextMuted
                     )
 
                     Spacer(Modifier.height(24.dp))
@@ -908,7 +908,7 @@ fun ProfileScreen(
                         "현재 비밀번호",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = Palette.Ink
+                        color = Palette.TextPrimary
                     )
 
                     Spacer(Modifier.height(8.dp))
@@ -948,7 +948,7 @@ fun ProfileScreen(
                         Text(
                             text = error,
                             fontSize = 12.sp,
-                            color = Palette.Coral,
+                            color = Palette.Danger,
                             lineHeight = 18.sp
                         )
                     }
@@ -988,7 +988,7 @@ fun ProfileScreen(
                                 .height(46.dp),
                             shape = RoundedCornerShape(10.dp),
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = Palette.Coral
+                                containerColor = Palette.Danger
                             )
                         ) {
                             Text(
@@ -1022,14 +1022,14 @@ private fun PreferenceRow(
         Text(
             label,
             fontSize = 11.sp,
-            color = Palette.Muted,
+            color = Palette.TextMuted,
             modifier = Modifier.width(105.dp)
         )
 
         Text(
             value,
             fontSize = 12.sp,
-            color = Palette.Body,
+            color = Palette.TextBody,
             fontWeight = FontWeight.Medium,
             modifier = Modifier.weight(1f)
         )

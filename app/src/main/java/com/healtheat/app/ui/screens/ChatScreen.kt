@@ -70,7 +70,7 @@ fun ChatScreen(vm: HealtheatViewModel, onGoHome: () -> Unit) {
         ) {
             Box(
                 Modifier.size(47.dp)
-                    .background(Palette.Lavender, RoundedCornerShape(12.dp)),
+                    .background(Palette.PrimaryContainer, RoundedCornerShape(12.dp)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(Icons.Outlined.ChatBubbleOutline, contentDescription = null,
@@ -78,8 +78,8 @@ fun ChatScreen(vm: HealtheatViewModel, onGoHome: () -> Unit) {
             }
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
-                Text("식사 상담", fontWeight = FontWeight.Bold, fontSize = 17.sp, color = Palette.Ink)
-                Text("오늘의 식단을 함께 고민해요", fontSize = 11.sp, color = Palette.Muted)
+                Text("식사 상담", fontWeight = FontWeight.Bold, fontSize = 17.sp, color = Palette.TextPrimary)
+                Text("오늘의 식단을 함께 고민해요", fontSize = 11.sp, color = Palette.TextMuted)
             }
             TextButton(
                 onClick = {
@@ -88,7 +88,7 @@ fun ChatScreen(vm: HealtheatViewModel, onGoHome: () -> Unit) {
                 enabled = !vm.chatBusy && !vm.sending
             ) {
                 Text(if (vm.sessionId != null) "채팅 종료" else "새 채팅",
-                    color = Palette.Coral, fontSize = 11.sp)
+                    color = Palette.Danger, fontSize = 11.sp)
             }
         }
         HorizontalDivider(color = Palette.Border)
@@ -106,7 +106,7 @@ fun ChatScreen(vm: HealtheatViewModel, onGoHome: () -> Unit) {
                         CircularProgressIndicator(Modifier.size(22.dp),
                             color = Palette.Primary, strokeWidth = 2.5.dp)
                         Spacer(Modifier.width(12.dp))
-                        Text("채팅을 연결하고 있어요…", fontSize = 12.sp, color = Palette.Muted)
+                        Text("채팅을 연결하고 있어요…", fontSize = 12.sp, color = Palette.TextMuted)
                     }
                 }
             }
@@ -114,7 +114,7 @@ fun ChatScreen(vm: HealtheatViewModel, onGoHome: () -> Unit) {
                 item(key = "retry") {
                     Column(Modifier.fillMaxWidth().padding(vertical = 22.dp),
                         horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("채팅 연결을 확인해 주세요.", fontSize = 12.sp, color = Palette.Muted)
+                        Text("채팅 연결을 확인해 주세요.", fontSize = 12.sp, color = Palette.TextMuted)
                         TextButton(onClick = vm::openChat) {
                             Text("다시 연결하기", color = Palette.Primary)
                         }
@@ -123,7 +123,7 @@ fun ChatScreen(vm: HealtheatViewModel, onGoHome: () -> Unit) {
             }
             if (vm.messages.isEmpty() && sessionReady) {
                 item(key = "empty") {
-                    Text("궁금한 음식을 물어보세요.", color = Palette.Muted,
+                    Text("궁금한 음식을 물어보세요.", color = Palette.TextMuted,
                         fontSize = 13.sp, modifier = Modifier.padding(18.dp))
                 }
             }
@@ -158,18 +158,18 @@ fun ChatScreen(vm: HealtheatViewModel, onGoHome: () -> Unit) {
                                 bottomEnd = if (message.fromUser) 5.dp else 19.dp,
                                 bottomStart = 19.dp
                             ),
-                            color = if (message.fromUser) Palette.Primary else Palette.White
+                            color = if (message.fromUser) Palette.Primary else Palette.Surface
                         ) {
                             Text(
                                 formatMessageText(message.text),
                                 Modifier.padding(horizontal = 15.dp, vertical = 13.dp),
                                 fontSize = 12.sp,
                                 lineHeight = 19.sp,
-                                color = if (message.fromUser) Color.White else Palette.Body
+                                color = if (message.fromUser) Color.White else Palette.TextBody
                             )
                         }
                         Spacer(Modifier.height(5.dp))
-                        Text(message.time, fontSize = 9.sp, color = Palette.Muted)
+                        Text(message.time, fontSize = 9.sp, color = Palette.TextMuted)
                     }
                 }
             }
@@ -185,14 +185,14 @@ fun ChatScreen(vm: HealtheatViewModel, onGoHome: () -> Unit) {
                             strokeWidth = 2.5.dp
                         )
                         Spacer(Modifier.width(11.dp))
-                        Text("답변을 생성하고 있어요…", fontSize = 12.sp, color = Palette.Muted)
+                        Text("답변을 생성하고 있어요…", fontSize = 12.sp, color = Palette.TextMuted)
                     }
                 }
             }
         }
 
         if (!keyboardVisible) {
-            Text("이런 것도 물어볼 수 있어요", color = Palette.Muted,
+            Text("이런 것도 물어볼 수 있어요", color = Palette.TextMuted,
                 fontSize = 10.sp, fontWeight = FontWeight.Medium,
                 modifier = Modifier.padding(bottom = 7.dp))
             Row(
@@ -204,7 +204,7 @@ fun ChatScreen(vm: HealtheatViewModel, onGoHome: () -> Unit) {
                     Surface(
                         onClick = { if (sessionReady && !vm.sending) vm.selectChatExample(index) },
                         shape = RoundedCornerShape(10.dp),
-                        color = Palette.Lavender
+                        color = Palette.PrimaryContainer
                     ) {
                         Text(prompt,
                             Modifier.padding(horizontal = 12.dp, vertical = 9.dp),

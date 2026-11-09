@@ -53,7 +53,7 @@ fun RecipeSheet(
                 .fillMaxWidth()
                 .heightIn(max = 640.dp),
             shape = RoundedCornerShape(18.dp),
-            color = Palette.White,
+            color = Palette.Surface,
             shadowElevation = 10.dp
         ) {
             Column(
@@ -85,7 +85,7 @@ fun RecipeSheet(
                         },
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Palette.Ink,
+                        color = Palette.TextPrimary,
                         modifier = Modifier.weight(1f)
                     )
 
@@ -96,7 +96,7 @@ fun RecipeSheet(
                         Icon(
                             imageVector = Icons.Outlined.Close,
                             contentDescription = "닫기",
-                            tint = Palette.Muted
+                            tint = Palette.TextMuted
                         )
                     }
                 }
@@ -123,7 +123,7 @@ fun RecipeSheet(
                         item.name,
                         fontWeight = FontWeight.ExtraBold,
                         fontSize = 22.sp,
-                        color = Palette.Ink
+                        color = Palette.TextPrimary
                     )
 
                     Spacer(Modifier.height(6.dp))
@@ -131,7 +131,7 @@ fun RecipeSheet(
                     Text(
                         "추천 분량 · ${item.serving}",
                         fontSize = 12.sp,
-                        color = Palette.Muted
+                        color = Palette.TextMuted
                     )
 
                     Spacer(Modifier.height(20.dp))
@@ -140,7 +140,7 @@ fun RecipeSheet(
 
                         Text(
                             "주문 전 확인할 사항",
-                            color = Palette.Ink,
+                            color = Palette.TextPrimary,
                             fontWeight = FontWeight.Bold,
                             fontSize = 15.sp
                         )
@@ -166,7 +166,7 @@ fun RecipeSheet(
                         Text(
                             "별도 조리가 필요 없는 음식이에요.",
                             fontSize = 13.sp,
-                            color = Palette.Body
+                            color = Palette.TextBody
                         )
 
                     } else if (
@@ -184,7 +184,7 @@ fun RecipeSheet(
                         Text(
                             "레시피를 불러오는 중이에요.",
                             fontSize = 12.sp,
-                            color = Palette.Muted
+                            color = Palette.TextMuted
                         )
 
                     } else if (liveRecipe != null) {
@@ -215,7 +215,7 @@ fun RecipeSheet(
 
                         Text(
                             "필요한 재료",
-                            color = Palette.Ink,
+                            color = Palette.TextPrimary,
                             fontWeight = FontWeight.Bold,
                             fontSize = 15.sp
                         )
@@ -234,7 +234,7 @@ fun RecipeSheet(
                             recipe.ingredients.forEach { ingredient ->
                                 Text(
                                     "• $ingredient",
-                                    color = Palette.Body,
+                                    color = Palette.TextBody,
                                     fontSize = 12.sp,
                                     modifier = Modifier.padding(
                                         vertical = 4.dp
@@ -247,7 +247,7 @@ fun RecipeSheet(
 
                         Text(
                             "조리 방법",
-                            color = Palette.Ink,
+                            color = Palette.TextPrimary,
                             fontWeight = FontWeight.Bold,
                             fontSize = 15.sp
                         )
@@ -277,7 +277,7 @@ fun RecipeSheet(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Palette.White)
+                        .background(Palette.Surface)
                         .padding(
                             horizontal = 20.dp,
                             vertical = 14.dp
@@ -310,7 +310,7 @@ private fun GuideStep(
             modifier = Modifier
                 .size(26.dp)
                 .background(
-                    Palette.Lavender,
+                    Palette.PrimaryContainer,
                     CircleShape
                 ),
             contentAlignment = Alignment.Center
@@ -327,7 +327,7 @@ private fun GuideStep(
             text,
             fontSize = 12.sp,
             lineHeight = 19.sp,
-            color = Palette.Body,
+            color = Palette.TextBody,
             modifier = Modifier
                 .weight(1f)
                 .padding(top = 3.dp)

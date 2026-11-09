@@ -26,10 +26,10 @@ import com.healtheat.app.ui.theme.Palette
 fun PageHeader(title: String, subtitle: String? = null, action: (@Composable () -> Unit)? = null) {
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
-            Text(title, style = MaterialTheme.typography.headlineMedium, color = Palette.Ink)
+            Text(title, style = MaterialTheme.typography.headlineMedium, color = Palette.TextPrimary)
             if (subtitle != null) {
                 Spacer(Modifier.height(5.dp))
-                Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = Palette.Muted)
+                Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = Palette.TextMuted)
             }
         }
         action?.invoke()
@@ -53,7 +53,7 @@ fun BrandHeader() {
             Text("h", fontWeight = FontWeight.Black, fontSize = 27.sp, color = Color.White)
         }
         Spacer(Modifier.width(10.dp))
-        Text("healtheat", fontWeight = FontWeight.Bold, fontSize = 19.sp, color = Palette.Ink)
+        Text("healtheat", fontWeight = FontWeight.Bold, fontSize = 19.sp, color = Palette.TextPrimary)
     }
 }
 
@@ -85,7 +85,7 @@ fun OutlineAction(text: String, onClick: () -> Unit, modifier: Modifier = Modifi
         onClick = onClick, modifier = modifier.height(49.dp),
         shape = RoundedCornerShape(10.dp),
         border = BorderStroke(1.dp, Palette.Border),
-        colors = ButtonDefaults.outlinedButtonColors(contentColor = Palette.Body)
+        colors = ButtonDefaults.outlinedButtonColors(contentColor = Palette.TextBody)
     ) {
         if (icon != null) { Icon(icon, null, modifier = Modifier.size(16.dp)); Spacer(Modifier.width(6.dp)) }
         Text(text, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
@@ -95,7 +95,7 @@ fun OutlineAction(text: String, onClick: () -> Unit, modifier: Modifier = Modifi
 @Composable
 fun RoundedPanel(
     modifier: Modifier = Modifier,
-    color: Color = Palette.White,
+    color: Color = Palette.Surface,
     content: @Composable ColumnScope.() -> Unit
 ) {
     Surface(
@@ -104,7 +104,7 @@ fun RoundedPanel(
         shape = RoundedCornerShape(12.dp),
         border = BorderStroke(
             1.dp,
-            if (color == Palette.White) Palette.Border
+            if (color == Palette.Surface) Palette.Border
             else Color.Transparent
         ),
         shadowElevation = 0.dp
@@ -117,7 +117,7 @@ fun RoundedPanel(
 }
 
 @Composable
-fun Capsule(text: String, background: Color = Palette.Lavender, foreground: Color = Palette.Primary) {
+fun Capsule(text: String, background: Color = Palette.PrimaryContainer, foreground: Color = Palette.Primary) {
     Box(Modifier.background(background, RoundedCornerShape(8.dp)).padding(horizontal = 10.dp, vertical = 5.dp)) {
         Text(text, color = foreground, fontWeight = FontWeight.SemiBold, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
@@ -142,9 +142,9 @@ fun InfoRow(icon: ImageVector, title: String, subtitle: String? = null, onClick:
             Icon(icon, null, tint = Palette.Primary, modifier = Modifier.size(20.dp))
         }
         Column(Modifier.weight(1f)) {
-            Text(title, fontWeight = FontWeight.SemiBold, color = Palette.Ink, fontSize = 13.sp)
-            if (subtitle != null) Text(subtitle, fontSize = 11.sp, color = Palette.Muted)
+            Text(title, fontWeight = FontWeight.SemiBold, color = Palette.TextPrimary, fontSize = 13.sp)
+            if (subtitle != null) Text(subtitle, fontSize = 11.sp, color = Palette.TextMuted)
         }
-        if (onClick != null) Icon(Icons.Outlined.ArrowForward, null, tint = Palette.Muted, modifier = Modifier.size(18.dp))
+        if (onClick != null) Icon(Icons.Outlined.ArrowForward, null, tint = Palette.TextMuted, modifier = Modifier.size(18.dp))
     }
 }

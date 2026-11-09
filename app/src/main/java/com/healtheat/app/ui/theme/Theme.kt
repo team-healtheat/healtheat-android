@@ -15,36 +15,45 @@ import androidx.compose.ui.unit.sp
 import com.healtheat.app.R
 
 object Palette {
-    val Background = Color(0xFFFAF9F7)
-    val White = Color(0xFFFFFFFF)
-    val Ink = Color(0xFF26243D)
-    val Body = Color(0xFF49465D)
-    val Muted = Color(0xFF8C8A9A)
-    val Primary = Color(0xFF6855BF)
-    val DeepPurple = Color(0xFF4D429A)
-    val Lavender = Color(0xFFEEEAFF)
-    val Lilac = Color(0xFFDCD5FB)
-    val Coral = Color(0xFFF48272)
-    val Peach = Color(0xFFFFE7DE)
-    val Mint = Color(0xFFE4F2E8)
-    val MintInk = Color(0xFF43735A)
-    val Sky = Color(0xFFE6F0FB)
-    val Sand = Color(0xFFFFF1DE)
-    val Border = Color(0xFFEFEDF1)
+    /** Semantic app colours — use these instead of screen-specific colour literals. */
+    val Primary = Color(0xFF24734B)
+    val PrimaryDark = Color(0xFF17563B)
+    val PrimaryContainer = Color(0xFFE7F3EA)
+    val Secondary = Color(0xFF4A8C70)
+    val Background = Color(0xFFF5FAF6)
+    val Surface = Color(0xFFFFFFFF)
+    val TextPrimary = Color(0xFF1D3328)
+    val TextBody = Color(0xFF42564C)
+    val TextMuted = Color(0xFF698172)
+    val Border = Color(0xFFDCE9DE)
+    val Mint = Color(0xFFD8F0DF)
+    val MintInk = Color(0xFF24734B)
+    val Danger = Color(0xFFC34A4F)
+    val DangerContainer = Color(0xFFFCE8E8)
+    val Warning = Color(0xFFB77926)
+    val WarningContainer = Color(0xFFFFF3E3)
 }
 
 private val AppColors = lightColorScheme(
     primary = Palette.Primary,
-    secondary = Palette.Coral,
+    secondary = Palette.Secondary,
     background = Palette.Background,
-    surface = Palette.White,
-    onPrimary = Palette.White,
-    onSurface = Palette.Ink,
-    onBackground = Palette.Ink,
-    onSurfaceVariant = Palette.Body,
+    surface = Palette.Surface,
+    onPrimary = Palette.Surface,
+    primaryContainer = Palette.PrimaryContainer,
+    onPrimaryContainer = Palette.PrimaryDark,
+    secondaryContainer = Palette.Mint,
+    onSecondaryContainer = Palette.PrimaryDark,
+    onSurface = Palette.TextPrimary,
+    onBackground = Palette.TextPrimary,
+    onSurfaceVariant = Palette.TextBody,
     outline = Palette.Border,
-    surfaceVariant = Palette.Background,
-    surfaceContainerHighest = Palette.Background
+    surfaceVariant = Palette.PrimaryContainer,
+    surfaceContainerHighest = Palette.PrimaryContainer,
+    error = Palette.Danger,
+    errorContainer = Palette.DangerContainer,
+    onError = Palette.Surface,
+    onErrorContainer = Palette.Danger
 )
 
 private val AppFont = FontFamily(
@@ -70,20 +79,20 @@ fun HealtheatTheme(content: @Composable () -> Unit) {
 }
 
 /** All Compose OutlinedTextFields use one accessible, branded palette.
- * Input text: Ink | placeholder: Muted | focus border/cursor: Primary.
+ * Input text: primary text | placeholder: muted text | focus border/cursor: primary.
  */
 @Composable
 fun healtheatTextFieldColors(): TextFieldColors = OutlinedTextFieldDefaults.colors(
-    focusedTextColor = Palette.Ink,
-    unfocusedTextColor = Palette.Ink,
-    disabledTextColor = Palette.Muted,
-    focusedPlaceholderColor = Palette.Muted,
-    unfocusedPlaceholderColor = Palette.Muted,
+    focusedTextColor = Palette.TextPrimary,
+    unfocusedTextColor = Palette.TextPrimary,
+    disabledTextColor = Palette.TextMuted,
+    focusedPlaceholderColor = Palette.TextMuted,
+    unfocusedPlaceholderColor = Palette.TextMuted,
     focusedLabelColor = Palette.Primary,
-    unfocusedLabelColor = Palette.Body,
+    unfocusedLabelColor = Palette.TextBody,
     focusedBorderColor = Palette.Primary,
     unfocusedBorderColor = Palette.Border,
     cursorColor = Palette.Primary,
-    focusedContainerColor = Palette.White,
-    unfocusedContainerColor = Palette.White
+    focusedContainerColor = Palette.Surface,
+    unfocusedContainerColor = Palette.Surface
 )

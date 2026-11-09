@@ -98,8 +98,8 @@ fun HomeScreen(vm: HealtheatViewModel, onRecipe: (FoodItem, SourceType) -> Unit)
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Column {
-                    Text("오늘의 식탁", style = MaterialTheme.typography.titleLarge, color = Palette.Ink)
-                    Text("나를 위해 준비한 세 끼", fontSize = 12.sp, color = Palette.Muted)
+                    Text("오늘의 식탁", style = MaterialTheme.typography.titleLarge, color = Palette.TextPrimary)
+                    Text("나를 위해 준비한 세 끼", fontSize = 12.sp, color = Palette.TextMuted)
                 }
             }
             MealType.entries.forEach { type ->
@@ -147,7 +147,7 @@ private fun HomeHero(vm: HealtheatViewModel) {
                 DateTimeFormatter.ofPattern("M월 d일 EEEE", Locale.KOREAN)
             ),
             fontSize = 13.sp,
-            color = Palette.Muted
+            color = Palette.TextMuted
         )
 
         if (vm.profile.name.isNotBlank()) {
@@ -155,7 +155,7 @@ private fun HomeHero(vm: HealtheatViewModel) {
                 text = "${vm.profile.name}님, 안녕하세요.",
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Medium,
-                color = Palette.Body
+                color = Palette.TextBody
             )
         }
 
@@ -163,13 +163,13 @@ private fun HomeHero(vm: HealtheatViewModel) {
             text = "오늘의 식단",
             fontSize = 28.sp,
             fontWeight = FontWeight.Bold,
-            color = Palette.Ink
+            color = Palette.TextPrimary
         )
 
         Text(
             text = "건강 정보와 식사 취향을 반영한 추천 메뉴",
             fontSize = 13.sp,
-            color = Palette.Muted
+            color = Palette.TextMuted
         )
     }
 }
@@ -191,7 +191,7 @@ private fun GenerateEmptyCard(onGenerate: () -> Unit) {
         Spacer(Modifier.height(19.dp))
         Text(
             "오늘의 식단을 만들어볼까요?", Modifier.fillMaxWidth(), textAlign = TextAlign.Center,
-            fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Palette.Ink
+            fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Palette.TextPrimary
         )
         Spacer(Modifier.height(7.dp))
         Text(
@@ -200,14 +200,14 @@ private fun GenerateEmptyCard(onGenerate: () -> Unit) {
             textAlign = TextAlign.Center,
             fontSize = 12.sp,
             lineHeight = 19.sp,
-            color = Palette.Muted
+            color = Palette.TextMuted
         )
         Spacer(Modifier.height(22.dp))
         FilledAction(
             "나만의 하루 식단 만들기",
             onGenerate,
             Modifier.fillMaxWidth(),
-            Palette.Coral,
+            Palette.Primary,
         )
         Spacer(Modifier.height(8.dp))
     }
@@ -227,12 +227,12 @@ private fun GeneratingCard() {
         Spacer(Modifier.height(21.dp))
         Text(
             "오늘의 식탁을 준비하는 중…", Modifier.fillMaxWidth(), textAlign = TextAlign.Center,
-            fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Palette.Ink
+            fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Palette.TextPrimary
         )
         Spacer(Modifier.height(7.dp))
         Text(
             "건강정보와 취향을 반영하고 있어요", Modifier.fillMaxWidth(), textAlign = TextAlign.Center,
-            fontSize = 12.sp, color = Palette.Muted
+            fontSize = 12.sp, color = Palette.TextMuted
         )
         Spacer(Modifier.height(18.dp))
     }
@@ -262,10 +262,10 @@ private fun MealCard(
                     MealTimeIcon(type = meal.type, tint = Palette.Primary)
                     Spacer(Modifier.width(6.dp))
                     Text(meal.type.label, fontSize = 12.sp,
-                        fontWeight = FontWeight.SemiBold, color = Palette.Muted)
+                        fontWeight = FontWeight.SemiBold, color = Palette.TextMuted)
                     Spacer(Modifier.width(8.dp))
                     Surface(
-                        color = if (meal.source == SourceType.DINING_OUT) Palette.Peach else Palette.Lavender,
+                        color = if (meal.source == SourceType.DINING_OUT) Palette.WarningContainer else Palette.PrimaryContainer,
                         shape = RoundedCornerShape(8.dp)
                     ) {
                         Text(
@@ -273,7 +273,7 @@ private fun MealCard(
                             Modifier.padding(horizontal = 7.dp, vertical = 4.dp),
                             fontSize = 10.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color = Palette.Ink
+                            color = if (meal.source == SourceType.DINING_OUT) Palette.Warning else Palette.Primary
                         )
                     }
                 }
@@ -282,7 +282,7 @@ private fun MealCard(
                     meal.headline,
                     fontSize = 17.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Palette.Ink,
+                    color = Palette.TextPrimary,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -312,7 +312,7 @@ private fun MealCard(
         Text(
             text = meal.items.joinToString(" · ") { it.name },
             fontSize = 12.sp,
-            color = Palette.Body,
+            color = Palette.TextBody,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
@@ -349,13 +349,13 @@ private fun MealCard(
                         Text(
                             item.name,
                             fontSize = 13.sp,
-                            color = Palette.Ink
+                            color = Palette.TextPrimary
                         )
                         if (item.serving.isNotBlank()) {
                             Text(
                                 item.serving,
                                 fontSize = 11.sp,
-                                color = Palette.Muted
+                                color = Palette.TextMuted
                             )
                         }
                     }
@@ -377,13 +377,13 @@ private fun MealCard(
                     "추천 이유",
                     fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = Palette.Ink
+                    color = Palette.TextPrimary
                 )
                 Spacer(Modifier.height(4.dp))
                 Text(
                     meal.reason,
                     fontSize = 12.sp,
-                    color = Palette.Body,
+                    color = Palette.TextBody,
                     lineHeight = 18.sp
                 )
             }
@@ -410,7 +410,7 @@ private fun MealCard(
             enabled = !recorded && !recording && !regenerating,
             shape = RoundedCornerShape(10.dp)
         ) {
-            Text("다른 메뉴를 먹었어요", fontSize = 12.sp, color = Palette.Body)
+            Text("다른 메뉴를 먹었어요", fontSize = 12.sp, color = Palette.TextBody)
         }
     }
 }
@@ -433,13 +433,13 @@ private fun HomeRecordDialog(
     Dialog(onDismissRequest = onDismiss) {
         Surface(
             modifier = Modifier.fillMaxWidth().imePadding(),
-            color = Palette.White,
+            color = Palette.Surface,
             shape = RoundedCornerShape(16.dp)
         ) {
             Column(Modifier.fillMaxWidth().padding(22.dp)) {
-                Text("먹은 음식 기록하기", fontSize = 19.sp, fontWeight = FontWeight.Bold, color = Palette.Ink)
+                Text("먹은 음식 기록하기", fontSize = 19.sp, fontWeight = FontWeight.Bold, color = Palette.TextPrimary)
                 Spacer(Modifier.height(8.dp))
-                Text("오늘 실제로 먹은 메뉴를 입력해 주세요.", fontSize = 12.sp, color = Palette.Muted)
+                Text("오늘 실제로 먹은 메뉴를 입력해 주세요.", fontSize = 12.sp, color = Palette.TextMuted)
                 Spacer(Modifier.height(20.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     MealType.entries.forEach { type ->
@@ -448,7 +448,7 @@ private fun HomeRecordDialog(
                             onClick = { selectedType = type },
                             enabled = initialType == null && !saving,
                             label = { Text(type.label, fontSize = 12.sp) },
-                            colors = FilterChipDefaults.filterChipColors(selectedContainerColor = Palette.Lavender)
+                            colors = FilterChipDefaults.filterChipColors(selectedContainerColor = Palette.PrimaryContainer)
                         )
                     }
                 }
