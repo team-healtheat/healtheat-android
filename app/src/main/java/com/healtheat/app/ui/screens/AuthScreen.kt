@@ -236,9 +236,7 @@ fun AuthScreen(
 
         OutlinedTextField(
             value = password,
-            onValueChange = {
-                password = it
-            },
+            onValueChange = { password = it.take(72) },
             modifier = Modifier
                 .fillMaxWidth()
                 .focusRequester(passwordFocus),
@@ -275,13 +273,13 @@ fun AuthScreen(
             Text(
                 text = when {
                     password.isEmpty() ->
-                        "8~72자로 입력해 주세요."
+                        "8자 이상 입력해 주세요."
 
                     passwordValid ->
-                        "사용 가능한 비밀번호 길이예요."
+                        "사용할 수 있는 비밀번호예요."
 
                     else ->
-                        "비밀번호는 8~72자여야 해요."
+                        "8자 이상 입력해 주세요."
                 },
                 fontSize = 11.sp,
                 color = when {
