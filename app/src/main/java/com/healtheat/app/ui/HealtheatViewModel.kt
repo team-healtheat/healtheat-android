@@ -1075,14 +1075,22 @@ class HealtheatViewModel : ViewModel() {
 
     fun endChat() {
         val id = sessionId ?: return
+        if (chatBusy) return
+        chatBusy = true
         viewModelScope.launch {
+            var startedNewSession = false
             try {
                 ApiClient.prepareMutation()
                 api.endChat(id).requireBodyOrNull()
                 sessionId = null; messages.clear(); clearGuidedChat()
-                toast("채팅을 종료했습니다.")
+                // A fresh session follows immediately, so the empty state is never mistaken for a failure.
+                chatBusy = false
+                openChat()
+                startedNewSession = true
             } catch (t: Exception) {
                 report(t)
+            } finally {
+                if (!startedNewSession) chatBusy = false
             }
         }
     }

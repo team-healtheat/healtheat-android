@@ -266,7 +266,7 @@ private fun MealCard(
             TextButton(
                 onClick = onRegenerate,
                 contentPadding = PaddingValues(horizontal = 2.dp),
-                enabled = !regenerating && !recording
+                enabled = !recorded && !regenerating && !recording
             ) {
                 if (regenerating) {
                     CircularProgressIndicator(
