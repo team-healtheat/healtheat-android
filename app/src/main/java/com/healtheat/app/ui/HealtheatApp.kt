@@ -26,7 +26,7 @@ import kotlinx.coroutines.delay
 private data class BottomPage(val route: String, val label: String, val icon: ImageVector)
 private val pages = listOf(
     BottomPage("home", "홈", Icons.Outlined.Home),
-    BottomPage("records", "식사 기록", Icons.Outlined.DateRange),
+    BottomPage("records", "식사 기록", Icons.Outlined.Event),
     BottomPage("chat", "AI 챗봇", Icons.Outlined.ChatBubbleOutline),
     BottomPage("profile", "마이페이지", Icons.Outlined.PersonOutline)
 )
@@ -94,7 +94,7 @@ fun HealtheatApp(vm: HealtheatViewModel = viewModel()) {
         bottomBar = {
             if (isMain && !(keyboardVisible && page == "chat")) {
                 NavigationBar(
-                    containerColor = Palette.White,
+                    containerColor = Palette.Surface,
                     tonalElevation = 1.dp
                 ) {
                     pages.forEach { item ->
@@ -108,9 +108,9 @@ fun HealtheatApp(vm: HealtheatViewModel = viewModel()) {
                             colors = NavigationBarItemDefaults.colors(
                                 selectedIconColor = Palette.Primary,
                                 selectedTextColor = Palette.Primary,
-                                indicatorColor = Palette.Lavender,
-                                unselectedIconColor = Palette.Muted,
-                                unselectedTextColor = Palette.Muted
+                                indicatorColor = Palette.PrimaryContainer,
+                                unselectedIconColor = Palette.TextMuted,
+                                unselectedTextColor = Palette.TextMuted
                             )
                         )
                     }
@@ -184,12 +184,12 @@ fun HealtheatApp(vm: HealtheatViewModel = viewModel()) {
             if (notice != null) {
                 Surface(
                     Modifier.align(Alignment.BottomCenter).padding(horizontal = 22.dp, vertical = 13.dp),
-                    color = Palette.Ink,
+                    color = Palette.TextPrimary,
                     shape = RoundedCornerShape(16.dp),
                     shadowElevation = 10.dp
                 ) {
                     Row(Modifier.padding(horizontal = 17.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Outlined.CheckCircleOutline, null, tint = Palette.Coral, modifier = Modifier.size(19.dp))
+                        Icon(Icons.Outlined.CheckCircleOutline, null, tint = Palette.Primary, modifier = Modifier.size(19.dp))
                         Spacer(Modifier.width(10.dp))
                         Text(notice, color = Color.White, fontSize = 12.sp)
                     }

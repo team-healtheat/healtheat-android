@@ -245,14 +245,14 @@ fun OnboardingScreen(
                     Icon(
                         Icons.AutoMirrored.Outlined.ArrowBack,
                         contentDescription = "뒤로",
-                        tint = Palette.Ink
+                        tint = Palette.TextPrimary
                     )
                 }
                 IconButton(
                     onClick = { clearDraft(); onClose() },
                     modifier = Modifier.align(Alignment.CenterEnd)
                 ) {
-                    Icon(Icons.Outlined.Close, contentDescription = "닫기", tint = Palette.Muted)
+                    Icon(Icons.Outlined.Close, contentDescription = "닫기", tint = Palette.TextMuted)
                 }
             }
         }
@@ -285,11 +285,11 @@ fun OnboardingScreen(
                 title,
                 fontSize = 25.sp,
                 fontWeight = FontWeight.ExtraBold,
-                color = Palette.Ink,
+                color = Palette.TextPrimary,
                 lineHeight = 32.sp
             )
             Spacer(Modifier.height(8.dp))
-            Text(subtitle, fontSize = 13.sp, color = Palette.Muted)
+            Text(subtitle, fontSize = 13.sp, color = Palette.TextMuted)
             Spacer(Modifier.height(25.dp))
             when (step) {
                 1 -> {
@@ -298,7 +298,7 @@ fun OnboardingScreen(
                             "나이",
                             fontWeight = FontWeight.Bold,
                             fontSize = 13.sp,
-                            color = Palette.Ink
+                            color = Palette.TextPrimary
                         )
                         Spacer(Modifier.height(10.dp))
                         OutlinedTextField(
@@ -315,7 +315,7 @@ fun OnboardingScreen(
                             "성별 · 선택사항",
                             fontWeight = FontWeight.Bold,
                             fontSize = 13.sp,
-                            color = Palette.Ink
+                            color = Palette.TextPrimary
                         )
                         Spacer(Modifier.height(7.dp))
                         Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
@@ -324,7 +324,7 @@ fun OnboardingScreen(
                                     selected = gender == opt, onClick = { gender = opt },
                                     label = { Text(opt, fontSize = 11.sp) },
                                     colors = FilterChipDefaults.filterChipColors(
-                                        selectedContainerColor = Palette.Lavender
+                                        selectedContainerColor = Palette.PrimaryContainer
                                     )
                                 )
                             }
@@ -336,9 +336,9 @@ fun OnboardingScreen(
                                     "배달·외식 추천도 받아볼래요",
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 12.sp,
-                                    color = Palette.Ink
+                                    color = Palette.TextPrimary
                                 )
-                                Text("하루 최대 1끼까지", fontSize = 10.sp, color = Palette.Muted)
+                                Text("하루 최대 1끼까지", fontSize = 10.sp, color = Palette.TextMuted)
                             }
                             Switch(
                                 checked = diningOut, onCheckedChange = { diningOut = it },
@@ -379,7 +379,7 @@ fun OnboardingScreen(
                     RoundedPanel(Modifier.fillMaxWidth()) {
                         Text(
                             "알레르기 상태",
-                            color = Palette.Ink,
+                            color = Palette.TextPrimary,
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Bold
                         )
@@ -397,14 +397,14 @@ fun OnboardingScreen(
                                         }
                                     }, label = { Text(status, fontSize = 11.sp) },
                                     colors = FilterChipDefaults.filterChipColors(
-                                        selectedContainerColor = Palette.Lavender
+                                        selectedContainerColor = Palette.PrimaryContainer
                                     )
                                 )
                             }
                         }
                         if (allergyStatus == "있음") {
                             Spacer(Modifier.height(14.dp))
-                            Text("해당하는 항목을 선택해 주세요", fontSize = 11.sp, color = Palette.Muted)
+                            Text("해당하는 항목을 선택해 주세요", fontSize = 11.sp, color = Palette.TextMuted)
                             Spacer(Modifier.height(6.dp))
                             listOf(
                                 listOf("밀", "메밀", "대두", "땅콩"),
@@ -426,7 +426,7 @@ fun OnboardingScreen(
                                                 )
                                             }, label = { Text(item, fontSize = 11.sp) },
                                             colors = FilterChipDefaults.filterChipColors(
-                                                selectedContainerColor = Palette.Peach
+                                                selectedContainerColor = Palette.WarningContainer
                                             )
                                         )
                                     }
@@ -454,7 +454,7 @@ fun OnboardingScreen(
                         Text(
                             "좋아하는 음식",
                             fontSize = 12.sp,
-                            color = Palette.Ink,
+                            color = Palette.TextPrimary,
                             fontWeight = FontWeight.Bold
                         )
                         Spacer(Modifier.height(7.dp))
@@ -473,7 +473,7 @@ fun OnboardingScreen(
                         Text(
                             "피하고 싶은 음식",
                             fontSize = 12.sp,
-                            color = Palette.Ink,
+                            color = Palette.TextPrimary,
                             fontWeight = FontWeight.Bold
                         )
                         Spacer(Modifier.height(7.dp))
@@ -492,7 +492,7 @@ fun OnboardingScreen(
                         Text(
                             "선호하는 식사 스타일",
                             fontSize = 12.sp,
-                            color = Palette.Ink,
+                            color = Palette.TextPrimary,
                             fontWeight = FontWeight.Bold
                         )
                         Spacer(Modifier.height(7.dp))
@@ -543,7 +543,7 @@ fun OnboardingScreen(
         Row(
             Modifier
                 .fillMaxWidth()
-                .background(Palette.White)
+                .background(Palette.Surface)
                 .padding(if (keyboardVisible) 6.dp else 16.dp),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
@@ -608,15 +608,15 @@ fun OnboardingScreen(
         AlertDialog(
             onDismissRequest = { showExitDialog = false },
             shape = RoundedCornerShape(16.dp),
-            containerColor = Palette.White,
+            containerColor = Palette.Surface,
             title = {
-                Text("설정을 중단할까요?", color = Palette.Ink, fontWeight = FontWeight.Bold)
+                Text("설정을 중단할까요?", color = Palette.TextPrimary, fontWeight = FontWeight.Bold)
             },
             text = {
                 Text(
                     "계정은 이미 만들어졌어요. 지금 나가면 입력 중인 내용은 저장되지 않으며, " +
                             "다음 로그인 때 이어서 설정할 수 있어요.",
-                    color = Palette.Body,
+                    color = Palette.TextBody,
                     fontSize = 13.sp,
                     lineHeight = 20.sp
                 )
@@ -632,7 +632,7 @@ fun OnboardingScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showExitDialog = false }) {
-                    Text("계속 설정하기", color = Palette.Ink)
+                    Text("계속 설정하기", color = Palette.TextPrimary)
                 }
             }
         )
@@ -646,9 +646,9 @@ private fun SummaryRow(label: String, value: String) {
             .fillMaxWidth()
             .padding(vertical = 8.dp)
     ) {
-        Text(label, fontSize = 10.sp, color = Palette.Muted)
+        Text(label, fontSize = 10.sp, color = Palette.TextMuted)
         Spacer(Modifier.height(3.dp))
-        Text(value, color = Palette.Ink, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+        Text(value, color = Palette.TextPrimary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
     }
     HorizontalDivider(color = Palette.Border)
 }

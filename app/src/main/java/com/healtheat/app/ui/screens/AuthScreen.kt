@@ -106,7 +106,7 @@ fun AuthScreen(
                 Icon(
                     Icons.Outlined.ArrowBack,
                     contentDescription = "뒤로",
-                    tint = Palette.Ink
+                    tint = Palette.TextPrimary
                 )
             }
         }
@@ -118,7 +118,7 @@ fun AuthScreen(
             modifier = Modifier
                 .size(72.dp)
                 .background(
-                    Palette.Lavender,
+                    Palette.PrimaryContainer,
                     RoundedCornerShape(25.dp)
                 ),
             contentAlignment = Alignment.Center
@@ -140,7 +140,7 @@ fun AuthScreen(
             } else {
                 "반가워요,\n오늘도 맛있는 하루!"
             },
-            color = Palette.Ink,
+            color = Palette.TextPrimary,
             fontWeight = FontWeight.ExtraBold,
             fontSize = 28.sp,
             lineHeight = 36.sp
@@ -154,7 +154,7 @@ fun AuthScreen(
             } else {
                 "계정으로 로그인해 나만의 식단을 확인하세요."
             },
-            color = Palette.Muted,
+            color = Palette.TextMuted,
             fontSize = 13.sp
         )
 
@@ -168,7 +168,7 @@ fun AuthScreen(
             text = "이메일",
             fontSize = 12.sp,
             fontWeight = FontWeight.Bold,
-            color = Palette.Ink
+            color = Palette.TextPrimary
         )
 
         Spacer(Modifier.height(7.dp))
@@ -215,7 +215,7 @@ fun AuthScreen(
             Text(
                 text = "올바른 이메일 주소를 입력해 주세요.",
                 fontSize = 11.sp,
-                color = Palette.Coral
+                color = Palette.Danger
             )
         }
 
@@ -229,7 +229,7 @@ fun AuthScreen(
             text = "비밀번호",
             fontSize = 12.sp,
             fontWeight = FontWeight.Bold,
-            color = Palette.Ink
+            color = Palette.TextPrimary
         )
 
         Spacer(Modifier.height(7.dp))
@@ -283,9 +283,9 @@ fun AuthScreen(
                 },
                 fontSize = 11.sp,
                 color = when {
-                    password.isEmpty() -> Palette.Muted
+                    password.isEmpty() -> Palette.TextMuted
                     passwordValid -> Palette.MintInk
-                    else -> Palette.Coral
+                    else -> Palette.Danger
                 }
             )
         }
@@ -306,7 +306,7 @@ fun AuthScreen(
                 text = "비밀번호 확인",
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
-                color = Palette.Ink
+                color = Palette.TextPrimary
             )
 
             Spacer(Modifier.height(7.dp))
@@ -358,7 +358,7 @@ fun AuthScreen(
                     color = if (confirmValid) {
                         Palette.MintInk
                     } else {
-                        Palette.Coral
+                        Palette.Danger
                     }
                 )
             }
@@ -373,7 +373,7 @@ fun AuthScreen(
                 text = "닉네임",
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
-                color = Palette.Ink
+                color = Palette.TextPrimary
             )
 
             Spacer(Modifier.height(7.dp))
@@ -420,7 +420,7 @@ fun AuthScreen(
             Text(
                 text = "${nickname.length}/50자",
                 fontSize = 11.sp,
-                color = Palette.Muted
+                color = Palette.TextMuted
             )
         }
 
