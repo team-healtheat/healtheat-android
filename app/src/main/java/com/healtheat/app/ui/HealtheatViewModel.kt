@@ -633,6 +633,42 @@ class HealtheatViewModel : ViewModel() {
         }
     }
 
+    /** Calendar records can be corrected without changing the recommendation flow. */
+    fun updateCustomRecord(
+        recordId: Long,
+        type: MealType,
+        foodName: String,
+        date: LocalDate,
+        onSuccess: () -> Unit = {}
+    ) {
+        val cleaned = foodName.trim()
+        if (cleaned.isBlank()) {
+            toast("음식 이름을 입력해 주세요"); return
+        }
+        if (recording) return
+        recording = true
+        viewModelScope.launch {
+            try {
+                val items = JsonArray().apply { add(obj("foodName" to cleaned)) }
+                ApiClient.prepareMutation()
+                api.updateMealRecord(
+                    recordId,
+                    obj(
+                        "mealDate" to date.toString(), "mealType" to type.name,
+                        "items" to items
+                    )
+                ).requireBodyOrNull()
+                refreshRecords()
+                toast("식사 기록을 수정했어요")
+                onSuccess()
+            } catch (t: Exception) {
+                report(t)
+            } finally {
+                recording = false
+            }
+        }
+    }
+
     /** 기본 정보 PUT은 전체 교체 방식이므로 바꾸지 않은 값도 함께 보존해 전송한다. */
     fun saveBasicInfo(
         age: Int,

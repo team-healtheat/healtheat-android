@@ -518,7 +518,14 @@ fun OnboardingScreen(
                             placeholder = { Text("짜고 기름진 음식") },
                             singleLine = true,
                             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-                            keyboardActions = KeyboardActions(onNext = { styleFocus.requestFocus() }),
+                            keyboardActions = KeyboardActions(onNext = {
+                                styleFocus.requestFocus()
+                                // IME resize finishes after focus transfer; scroll once more then.
+                                onboardingScope.launch {
+                                    delay(280)
+                                    styleBring.bringIntoView()
+                                }
+                            }),
                             shape = RoundedCornerShape(14.dp),
                             colors = healtheatTextFieldColors()
                         )

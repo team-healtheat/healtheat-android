@@ -109,6 +109,7 @@ fun HomeScreen(vm: HealtheatViewModel, onRecipe: (FoodItem, SourceType) -> Unit)
                                 onCustomRecord = { openCustomRecord(type) },
                                 regenerating = vm.busyMeal == type,
                                 recorded = vm.records.any { it.date == vm.today && it.type == type },
+                                recordedRecommended = vm.records.any { it.date == vm.today && it.type == type && it.fromRecommendation },
                                 recording = vm.recording
                             )
                         }
@@ -227,6 +228,7 @@ private fun MealCard(
     onCustomRecord: () -> Unit,
     regenerating: Boolean,
     recorded: Boolean,
+    recordedRecommended: Boolean,
     recording: Boolean
 ) {
     var expanded by remember(meal.type) { mutableStateOf(false) }
@@ -358,7 +360,7 @@ private fun MealCard(
         FilledAction(
             text = when {
                 recording -> "저장 중..."
-                recorded -> "기록 완료"
+                recorded -> if (recordedRecommended) "추천 메뉴 기록 완료" else "식사 기록 완료"
                 else -> "추천 메뉴 먹었어요"
             },
             onClick = onRecord,
@@ -376,7 +378,16 @@ private fun MealCard(
             shape = RoundedCornerShape(10.dp),
             border = BorderStroke(1.dp, Palette.Lilac)
         ) {
-            Text("다른 메뉴를 먹었어요", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Palette.Primary)
+            if (recorded) {
+                Icon(Icons.Outlined.CheckCircle, contentDescription = null, modifier = Modifier.size(16.dp), tint = Palette.MintInk)
+                Spacer(Modifier.width(6.dp))
+            }
+            Text(
+                if (recorded) "기록이 완료됐어요" else "다른 메뉴를 먹었어요",
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = if (recorded) Palette.MintInk else Palette.Primary
+            )
         }
         }
     }
