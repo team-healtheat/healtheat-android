@@ -2,7 +2,9 @@
 package com.healtheat.app.ui.screens
 
 import android.util.Patterns
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.relocation.BringIntoViewRequester
@@ -13,6 +15,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.Visibility
+import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -23,15 +27,19 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.healtheat.app.ui.HealtheatViewModel
 import com.healtheat.app.ui.components.*
 import com.healtheat.app.ui.theme.Palette
 import com.healtheat.app.ui.theme.healtheatTextFieldColors
+import com.healtheat.app.R
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -52,10 +60,23 @@ fun AuthScreen(
     var password by remember { mutableStateOf("") }
     var confirm by remember { mutableStateOf("") }
     var nickname by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
+    var confirmVisible by remember { mutableStateOf(false) }
 
     // 이메일 검증 상태
     var emailTouched by remember { mutableStateOf(false) }
     var emailFocused by remember { mutableStateOf(false) }
+
+    val resetSignupDraft: () -> Unit = {
+        email = ""
+        password = ""
+        confirm = ""
+        nickname = ""
+        passwordVisible = false
+        confirmVisible = false
+        emailTouched = false
+        emailFocused = false
+    }
 
     // 입력값 검증
     val emailValid = Patterns.EMAIL_ADDRESS
@@ -89,6 +110,14 @@ fun AuthScreen(
     val confirmBring = remember { BringIntoViewRequester() }
     val nicknameBring = remember { BringIntoViewRequester() }
 
+    // 회원가입 중 시스템 뒤로가기는 앱 종료 대신 로그인 화면으로 돌아간다.
+    BackHandler(enabled = signup) {
+        focusManager.clearFocus()
+        keyboardController?.hide()
+        resetSignupDraft()
+        signup = false
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -114,22 +143,12 @@ fun AuthScreen(
         Spacer(Modifier.height(30.dp))
 
         // 앱 로고
-        Box(
-            modifier = Modifier
-                .size(72.dp)
-                .background(
-                    Palette.Lavender,
-                    RoundedCornerShape(25.dp)
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = "h.",
-                fontSize = 39.sp,
-                fontWeight = FontWeight.Black,
-                color = Palette.Primary
-            )
-        }
+        Image(
+            painter = painterResource(R.drawable.healtheat_logo),
+            contentDescription = "Healtheat",
+            contentScale = ContentScale.Fit,
+            modifier = Modifier.size(72.dp)
+        )
 
         Spacer(Modifier.height(22.dp))
 
@@ -240,8 +259,16 @@ fun AuthScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .focusRequester(passwordFocus),
-            visualTransformation =
-                PasswordVisualTransformation(),
+            visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+            trailingIcon = {
+                IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                    Icon(
+                        imageVector = if (passwordVisible) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
+                        contentDescription = if (passwordVisible) "비밀번호 숨기기" else "비밀번호 보기",
+                        tint = Palette.Muted
+                    )
+                }
+            },
             shape = RoundedCornerShape(16.dp),
             singleLine = true,
             keyboardOptions = KeyboardOptions(
@@ -328,8 +355,16 @@ fun AuthScreen(
                             }
                         }
                     },
-                visualTransformation =
-                    PasswordVisualTransformation(),
+                visualTransformation = if (confirmVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                trailingIcon = {
+                    IconButton(onClick = { confirmVisible = !confirmVisible }) {
+                        Icon(
+                            imageVector = if (confirmVisible) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
+                            contentDescription = if (confirmVisible) "비밀번호 숨기기" else "비밀번호 보기",
+                            tint = Palette.Muted
+                        )
+                    }
+                },
                 shape = RoundedCornerShape(16.dp),
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(
@@ -469,6 +504,7 @@ fun AuthScreen(
             onClick = {
                 focusManager.clearFocus()
                 keyboardController?.hide()
+                resetSignupDraft()
                 signup = !signup
             },
             modifier = Modifier.align(

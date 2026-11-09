@@ -87,7 +87,7 @@ fun ChatScreen(vm: HealtheatViewModel, onGoHome: () -> Unit) {
                 },
                 enabled = !vm.chatBusy && !vm.sending
             ) {
-                Text(if (vm.sessionId != null) "채팅 종료" else "새 채팅",
+                Text("새 채팅",
                     color = Palette.Coral, fontSize = 11.sp)
             }
         }

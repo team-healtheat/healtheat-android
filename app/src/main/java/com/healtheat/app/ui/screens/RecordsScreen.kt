@@ -10,11 +10,18 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.KeyboardArrowLeft
 import androidx.compose.material.icons.outlined.KeyboardArrowRight
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -22,12 +29,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import com.healtheat.app.data.MealRecord
 import com.healtheat.app.data.MealType
 import com.healtheat.app.ui.HealtheatViewModel
 import com.healtheat.app.ui.components.PageHeader
 import com.healtheat.app.ui.components.RoundedPanel
+import com.healtheat.app.ui.components.FilledAction
 import com.healtheat.app.ui.theme.Palette
+import com.healtheat.app.ui.theme.healtheatTextFieldColors
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
@@ -38,6 +48,8 @@ import java.util.Locale
 fun RecordsScreen(vm: HealtheatViewModel) {
     var month by remember { mutableStateOf(YearMonth.from(vm.today)) }
     var selectedDate by remember { mutableStateOf(vm.today) }
+    var editingType by remember { mutableStateOf<MealType?>(null) }
+    var editingRecord by remember { mutableStateOf<MealRecord?>(null) }
 
     LaunchedEffect(month, vm.authenticated) {
         vm.loadCalendarRecords(month)
@@ -168,7 +180,15 @@ fun RecordsScreen(vm: HealtheatViewModel) {
         } else {
             MealType.entries.forEach { type ->
                 val typeRecords = dailyRecords.filter { it.type == type }
-                RoundedPanel(Modifier.fillMaxWidth()) {
+                val canEdit = selectedDate <= vm.today
+                RoundedPanel(
+                    Modifier.fillMaxWidth().then(
+                        if (canEdit) Modifier.clickable {
+                            editingType = type
+                            editingRecord = typeRecords.firstOrNull()
+                        } else Modifier
+                    )
+                ) {
                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                         Text(type.label, fontSize = 14.sp, color = Palette.Ink, fontWeight = FontWeight.Bold)
                         Spacer(Modifier.weight(1f))
@@ -188,6 +208,85 @@ fun RecordsScreen(vm: HealtheatViewModel) {
                                 fontSize = 11.sp, color = Palette.Muted)
                         }
                     }
+                    if (canEdit) {
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                            TextButton(onClick = {
+                                editingType = type
+                                editingRecord = typeRecords.firstOrNull()
+                            }) {
+                                Icon(Icons.Outlined.Edit, contentDescription = null, modifier = Modifier.size(15.dp), tint = Palette.Primary)
+                                Spacer(Modifier.width(3.dp))
+                                Text(if (typeRecords.isEmpty()) "기록" else "편집", fontSize = 11.sp, color = Palette.Primary)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    editingType?.let { type ->
+        RecordEditorDialog(
+            type = type,
+            date = selectedDate,
+            initialFood = editingRecord?.foods?.joinToString(" · ").orEmpty(),
+            updating = editingRecord != null,
+            saving = vm.recording,
+            onDismiss = { if (!vm.recording) editingType = null },
+            onSave = { food ->
+                val onSaved = {
+                    editingType = null
+                    editingRecord = null
+                    vm.loadCalendarRecords(month)
+                }
+                editingRecord?.let { record ->
+                    vm.updateCustomRecord(record.id, type, food, selectedDate, onSaved)
+                } ?: vm.recordCustom(type, food, selectedDate, onSaved)
+            }
+        )
+    }
+}
+
+@Composable
+private fun RecordEditorDialog(
+    type: MealType,
+    date: LocalDate,
+    initialFood: String,
+    updating: Boolean,
+    saving: Boolean,
+    onDismiss: () -> Unit,
+    onSave: (String) -> Unit
+) {
+    var food by remember(type, date, initialFood) { mutableStateOf(initialFood) }
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(Modifier.fillMaxWidth(), color = Palette.White, shape = RoundedCornerShape(20.dp)) {
+            Column(Modifier.padding(22.dp)) {
+                Text(if (updating) "식사 기록 수정" else "식사 기록 추가", fontSize = 19.sp, fontWeight = FontWeight.Bold, color = Palette.Ink)
+                Spacer(Modifier.height(6.dp))
+                Text("${date.format(DateTimeFormatter.ofPattern("M월 d일", Locale.KOREAN))} ${type.label}", fontSize = 12.sp, color = Palette.Muted)
+                Spacer(Modifier.height(18.dp))
+                OutlinedTextField(
+                    value = food,
+                    onValueChange = { food = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("먹은 음식") },
+                    placeholder = { Text("예: 비빔밥 1인분") },
+                    singleLine = true,
+                    enabled = !saving,
+                    shape = RoundedCornerShape(12.dp),
+                    colors = healtheatTextFieldColors()
+                )
+                Spacer(Modifier.height(18.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(9.dp)) {
+                    OutlinedButton(onClick = onDismiss, modifier = Modifier.weight(1f).height(48.dp), enabled = !saving, shape = RoundedCornerShape(12.dp)) {
+                        Text("취소")
+                    }
+                    FilledAction(
+                        text = if (saving) "저장 중..." else if (updating) "수정하기" else "기록하기",
+                        onClick = { onSave(food) },
+                        modifier = Modifier.weight(1f),
+                        enabled = food.isNotBlank() && !saving
+                    )
                 }
             }
         }
