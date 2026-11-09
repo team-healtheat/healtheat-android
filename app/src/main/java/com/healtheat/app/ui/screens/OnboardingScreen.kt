@@ -9,6 +9,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.collectLatest
 import java.util.Locale
 import androidx.compose.foundation.layout.*
@@ -32,6 +33,8 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.CheckCircleOutline
@@ -58,6 +61,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -86,6 +92,22 @@ fun OnboardingScreen(
     val restored = remember(account, isInitialSetup) { store.load(account, isInitialSetup) }
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
+    val scrollState = rememberScrollState()
+    val onboardingScope = rememberCoroutineScope()
+    val ageBring = remember { BringIntoViewRequester() }
+    val otherAllergyBring = remember { BringIntoViewRequester() }
+    val likedBring = remember { BringIntoViewRequester() }
+    val dislikedBring = remember { BringIntoViewRequester() }
+    val styleBring = remember { BringIntoViewRequester() }
+    val likedFocus = remember { FocusRequester() }
+    val dislikedFocus = remember { FocusRequester() }
+    val styleFocus = remember { FocusRequester() }
+    val bringFocusedIntoView: (BringIntoViewRequester) -> Unit = { requester ->
+        onboardingScope.launch {
+            delay(180)
+            requester.bringIntoView()
+        }
+    }
     val dismissKeyboard: () -> Unit = {
         focusManager.clearFocus()
         keyboardController?.hide()
@@ -277,7 +299,8 @@ fun OnboardingScreen(
         Column(
             Modifier
                 .weight(1f)
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(scrollState)
+                .imePadding()
                 .padding(horizontal = 24.dp)
                 .padding(top = 28.dp, bottom = 20.dp)
         ) {
@@ -303,7 +326,10 @@ fun OnboardingScreen(
                         Spacer(Modifier.height(10.dp))
                         OutlinedTextField(
                             age, onValueChange = { age = it.filter(Char::isDigit).take(3) },
-                            modifier = Modifier.fillMaxWidth(), label = { Text("나이") },
+                            modifier = Modifier.fillMaxWidth()
+                                .bringIntoViewRequester(ageBring)
+                                .onFocusChanged { if (it.isFocused) bringFocusedIntoView(ageBring) },
+                            label = { Text("나이") },
                             suffix = { Text("세") }, singleLine = true,
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
                             keyboardActions = KeyboardActions(onDone = { dismissKeyboard() }),
@@ -439,7 +465,9 @@ fun OnboardingScreen(
                                 label = { Text("기타 알레르기") },
                                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                                 keyboardActions = KeyboardActions(onDone = { dismissKeyboard() }),
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier.fillMaxWidth()
+                                    .bringIntoViewRequester(otherAllergyBring)
+                                    .onFocusChanged { if (it.isFocused) bringFocusedIntoView(otherAllergyBring) },
                                 shape = RoundedCornerShape(14.dp),
                                 singleLine = true,
                                 colors = healtheatTextFieldColors()
@@ -461,11 +489,14 @@ fun OnboardingScreen(
                         OutlinedTextField(
                             liked,
                             { liked = it },
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier.fillMaxWidth()
+                                .bringIntoViewRequester(likedBring)
+                                .focusRequester(likedFocus)
+                                .onFocusChanged { if (it.isFocused) bringFocusedIntoView(likedBring) },
                             placeholder = { Text("연어, 두부, 나물") },
                             singleLine = true,
-                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                            keyboardActions = KeyboardActions(onDone = { dismissKeyboard() }),
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                            keyboardActions = KeyboardActions(onNext = { dislikedFocus.requestFocus() }),
                             shape = RoundedCornerShape(14.dp),
                             colors = healtheatTextFieldColors()
                         )
@@ -480,11 +511,14 @@ fun OnboardingScreen(
                         OutlinedTextField(
                             disliked,
                             { disliked = it },
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier.fillMaxWidth()
+                                .bringIntoViewRequester(dislikedBring)
+                                .focusRequester(dislikedFocus)
+                                .onFocusChanged { if (it.isFocused) bringFocusedIntoView(dislikedBring) },
                             placeholder = { Text("짜고 기름진 음식") },
                             singleLine = true,
-                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                            keyboardActions = KeyboardActions(onDone = { dismissKeyboard() }),
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                            keyboardActions = KeyboardActions(onNext = { styleFocus.requestFocus() }),
                             shape = RoundedCornerShape(14.dp),
                             colors = healtheatTextFieldColors()
                         )
@@ -499,7 +533,10 @@ fun OnboardingScreen(
                         OutlinedTextField(
                             style,
                             { style = it },
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier.fillMaxWidth()
+                                .bringIntoViewRequester(styleBring)
+                                .focusRequester(styleFocus)
+                                .onFocusChanged { if (it.isFocused) bringFocusedIntoView(styleBring) },
                             placeholder = { Text("담백한 집밥") },
                             singleLine = true,
                             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),

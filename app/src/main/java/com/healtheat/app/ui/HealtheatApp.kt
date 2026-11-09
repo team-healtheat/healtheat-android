@@ -1,6 +1,7 @@
 package com.healtheat.app.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -10,6 +11,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -21,6 +24,7 @@ import com.healtheat.app.ui.components.rememberImeVisibility
 import com.healtheat.app.ui.components.BrandHeader
 import com.healtheat.app.ui.screens.*
 import com.healtheat.app.ui.theme.Palette
+import com.healtheat.app.R
 import kotlinx.coroutines.delay
 
 private data class BottomPage(val route: String, val label: String, val icon: ImageVector)
@@ -88,9 +92,18 @@ fun HealtheatApp(vm: HealtheatViewModel = viewModel()) {
         }
     }
 
-    Scaffold(
-        containerColor = Palette.Background,
-        topBar = { if (isMain) BrandHeader() },
+    Box(Modifier.fillMaxSize()) {
+        if (isMain) {
+            Image(
+                painter = painterResource(R.drawable.healtheat_background),
+                contentDescription = null,
+                contentScale = ContentScale.FillBounds,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+        Scaffold(
+        containerColor = if (isMain) Color.Transparent else Palette.Background,
+        topBar = { if (isMain) BrandHeader(transparent = true) },
         bottomBar = {
             if (isMain && !(keyboardVisible && page == "chat")) {
                 NavigationBar(
@@ -196,6 +209,7 @@ fun HealtheatApp(vm: HealtheatViewModel = viewModel()) {
                 }
             }
         }
+    }
     }
 
     selectedFood?.let { item ->

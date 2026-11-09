@@ -1,6 +1,8 @@
 package com.healtheat.app.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -22,6 +25,7 @@ import androidx.compose.material.icons.outlined.Restaurant
 import androidx.compose.material.icons.outlined.KeyboardArrowDown
 import androidx.compose.material.icons.outlined.KeyboardArrowUp
 import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -52,6 +56,10 @@ import androidx.compose.ui.window.Dialog
 import com.healtheat.app.ui.theme.healtheatTextFieldColors
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -61,6 +69,7 @@ import com.healtheat.app.data.FoodItem
 import com.healtheat.app.data.Meal
 import com.healtheat.app.data.MealType
 import com.healtheat.app.data.SourceType
+import com.healtheat.app.R
 import com.healtheat.app.ui.HealtheatViewModel
 import com.healtheat.app.ui.components.FilledAction
 import com.healtheat.app.ui.components.RoundedPanel
@@ -77,49 +86,37 @@ fun HomeScreen(vm: HealtheatViewModel, onRecipe: (FoodItem, SourceType) -> Unit)
         customRecordType = type
         showCustomRecord = true
     }
-    Column(
-        Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 21.dp)
-            .padding(top = 4.dp, bottom = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
         HomeHero(vm)
-        if (!vm.hasPlan) {
-            if (vm.generating || vm.checkingPlan) GeneratingCard() else GenerateEmptyCard(onGenerate = vm::generatePlan)
-            TextButton(onClick = { openCustomRecord(null) }, modifier = Modifier.fillMaxWidth()) {
-                Text("오늘 먹은 음식 기록하기", color = Palette.Primary)
-            }
-        } else {
-            Row(
-                Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Column {
-                    Text("오늘의 식탁", style = MaterialTheme.typography.titleLarge, color = Palette.Ink)
-                    Text("나를 위해 준비한 세 끼", fontSize = 12.sp, color = Palette.Muted)
+        Column(
+            Modifier.padding(horizontal = 20.dp, vertical = 4.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            if (!vm.hasPlan) {
+                if (vm.generating || vm.checkingPlan) GeneratingCard() else GenerateEmptyCard(onGenerate = vm::generatePlan)
+                TextButton(onClick = { openCustomRecord(null) }, modifier = Modifier.fillMaxWidth()) {
+                    Text("오늘 먹은 음식 기록하기", color = Palette.Primary)
                 }
-            }
-            MealType.entries.forEach { type ->
-                vm.meals[type]?.let { meal ->
-                    key(meal.id, meal.version) {
-                        MealCard(
-                        meal = meal,
-                        onRecipe = onRecipe,
-                        onRegenerate = { vm.regenerate(type) },
-                        onRecord = { vm.recordRecommended(type) },
-                        onCustomRecord = { openCustomRecord(type) },
-                        regenerating = vm.busyMeal == type,
-                        recorded = vm.records.any { it.date == vm.today && it.type == type },
-                        recording = vm.recording
-                        )
+            } else {
+                MealType.entries.forEach { type ->
+                    vm.meals[type]?.let { meal ->
+                        key(meal.id, meal.version) {
+                            MealCard(
+                                meal = meal,
+                                onRecipe = onRecipe,
+                                onRegenerate = { vm.regenerate(type) },
+                                onRecord = { vm.recordRecommended(type) },
+                                onCustomRecord = { openCustomRecord(type) },
+                                regenerating = vm.busyMeal == type,
+                                recorded = vm.records.any { it.date == vm.today && it.type == type },
+                                recording = vm.recording
+                            )
+                        }
                     }
                 }
             }
+            Spacer(Modifier.height(5.dp))
         }
-        Spacer(Modifier.height(3.dp))
     }
 
     if (showCustomRecord) {
@@ -136,41 +133,23 @@ fun HomeScreen(vm: HealtheatViewModel, onRecipe: (FoodItem, SourceType) -> Unit)
 
 @Composable
 private fun HomeHero(vm: HealtheatViewModel) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+    Box(
+        Modifier.fillMaxWidth().height(285.dp)
     ) {
-        Text(
-            text = vm.today.format(
-                DateTimeFormatter.ofPattern("M월 d일 EEEE", Locale.KOREAN)
-            ),
-            fontSize = 13.sp,
-            color = Palette.Muted
-        )
-
-        if (vm.profile.name.isNotBlank()) {
-            Text(
-                text = "${vm.profile.name}님, 안녕하세요.",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Medium,
-                color = Palette.Body
-            )
+        Column(
+            Modifier.padding(start = 21.dp, top = 20.dp, end = 150.dp),
+            verticalArrangement = Arrangement.spacedBy(7.dp)
+        ) {
+            Text(vm.today.format(DateTimeFormatter.ofPattern("M월 d일 EEEE", Locale.KOREAN)), fontSize = 13.sp, color = Palette.Body)
+            if (vm.profile.name.isNotBlank()) Text("${vm.profile.name}님, 안녕하세요.", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = Palette.Ink)
+            Text("오늘의 식단", fontSize = 30.sp, fontWeight = FontWeight.Bold, color = Palette.Ink)
+            Text("건강 정보와 식사 기록을 반영한\n추천 메뉴예요.", fontSize = 13.sp, lineHeight = 20.sp, color = Palette.Body)
         }
-
-        Text(
-            text = "오늘의 식단",
-            fontSize = 28.sp,
-            fontWeight = FontWeight.Bold,
-            color = Palette.Ink
-        )
-
-        Text(
-            text = "건강 정보와 식사 취향을 반영한 추천 메뉴",
-            fontSize = 13.sp,
-            color = Palette.Muted
-        )
+        HeroSaladIllustration(Modifier.align(Alignment.TopEnd).padding(top = 72.dp, end = 8.dp).size(154.dp, 132.dp))
+        Column(Modifier.align(Alignment.BottomStart).padding(start = 21.dp, bottom = 15.dp)) {
+            Text("오늘의 식탁", style = MaterialTheme.typography.titleLarge, color = Palette.Ink)
+            Text("나를 위해 준비한 세 끼", fontSize = 13.sp, color = Palette.Body)
+        }
     }
 }
 
@@ -252,35 +231,29 @@ private fun MealCard(
 ) {
     var expanded by remember(meal.type) { mutableStateOf(false) }
 
-    RoundedPanel(Modifier.fillMaxWidth()) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = Palette.White,
+        shape = RoundedCornerShape(24.dp),
+        shadowElevation = 5.dp,
+        border = BorderStroke(1.dp, Color.White)
+    ) {
+        Column(Modifier.padding(horizontal = 17.dp, vertical = 15.dp)) {
         Row(
             Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.Top
         ) {
             Column(Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    MealTimeIcon(type = meal.type, tint = Palette.Primary)
-                    Spacer(Modifier.width(6.dp))
-                    Text(meal.type.label, fontSize = 12.sp,
-                        fontWeight = FontWeight.SemiBold, color = Palette.Muted)
-                    Spacer(Modifier.width(8.dp))
-                    Surface(
-                        color = if (meal.source == SourceType.DINING_OUT) Palette.Peach else Palette.Lavender,
-                        shape = RoundedCornerShape(8.dp)
-                    ) {
-                        Text(
-                            if (meal.source == SourceType.DINING_OUT) "배달·외식" else "집밥",
-                            Modifier.padding(horizontal = 7.dp, vertical = 4.dp),
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Palette.Ink
-                        )
-                    }
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+                    MealTimeIcon(type = meal.type, modifier = Modifier.size(25.dp), tint = Palette.Primary)
+                    Text(meal.type.label, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Palette.Ink)
+                    // Keep the meal source in its original, immediately visible position.
+                    SourceBadge(meal.source)
                 }
                 Spacer(Modifier.height(5.dp))
                 Text(
                     meal.headline,
-                    fontSize = 17.sp,
+                    fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     color = Palette.Ink,
                     maxLines = 2,
@@ -290,6 +263,7 @@ private fun MealCard(
 
             TextButton(
                 onClick = onRegenerate,
+                contentPadding = PaddingValues(horizontal = 2.dp),
                 enabled = !regenerating && !recording
             ) {
                 if (regenerating) {
@@ -303,36 +277,26 @@ private fun MealCard(
                         modifier = Modifier.size(15.dp))
                 }
                 Spacer(Modifier.width(3.dp))
-                Text(if (regenerating) "추천 중" else "재추천")
+                Text(if (regenerating) "추천 중" else "재추천", fontWeight = FontWeight.SemiBold)
             }
         }
 
-        Spacer(Modifier.height(8.dp))
+        Box(Modifier.fillMaxWidth().heightIn(min = 64.dp)) {
+            Column(Modifier.fillMaxWidth()) {
+                Text(
+                    text = meal.reason.ifBlank { meal.items.joinToString(" · ") { it.name } },
+                    fontSize = 13.sp,
+                    lineHeight = 19.sp,
+                    color = Palette.Body,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
 
-        Text(
-            text = meal.items.joinToString(" · ") { it.name },
-            fontSize = 12.sp,
-            color = Palette.Body,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
-
-        TextButton(
-            onClick = { expanded = !expanded },
-            modifier = Modifier.height(36.dp),
-            contentPadding = PaddingValues(0.dp)
-        ) {
-            Text(
-                if (expanded) "메뉴 접기" else "메뉴 자세히 보기",
-                fontSize = 12.sp,
-                color = Palette.Primary
-            )
-            Icon(
-                if (expanded) Icons.Outlined.KeyboardArrowUp
-                else Icons.Outlined.KeyboardArrowDown,
-                contentDescription = null,
-                modifier = Modifier.size(17.dp)
-            )
+                TextButton(onClick = { expanded = !expanded }, modifier = Modifier.height(32.dp), contentPadding = PaddingValues(0.dp)) {
+                    Text(if (expanded) "메뉴 접기" else "메뉴 자세히 보기", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Palette.Primary)
+                    Icon(if (expanded) Icons.Outlined.KeyboardArrowUp else Icons.Outlined.KeyboardArrowDown, null, modifier = Modifier.size(18.dp), tint = Palette.Primary)
+                }
+            }
         }
 
         if (expanded) {
@@ -389,7 +353,7 @@ private fun MealCard(
             }
         }
 
-        Spacer(Modifier.height(10.dp))
+        Spacer(Modifier.height(6.dp))
 
         FilledAction(
             text = when {
@@ -400,22 +364,47 @@ private fun MealCard(
             onClick = onRecord,
             modifier = Modifier.fillMaxWidth(),
             color = if (recorded) Palette.MintInk else Palette.Primary,
-            enabled = !recorded && !recording && !regenerating
+            enabled = !recorded && !recording && !regenerating,
+            icon = Icons.Outlined.CheckCircle
         )
 
-        Spacer(Modifier.height(7.dp))
+        Spacer(Modifier.height(6.dp))
         OutlinedButton(
             onClick = onCustomRecord,
             modifier = Modifier.fillMaxWidth().height(44.dp),
             enabled = !recorded && !recording && !regenerating,
-            shape = RoundedCornerShape(10.dp)
+            shape = RoundedCornerShape(10.dp),
+            border = BorderStroke(1.dp, Palette.Lilac)
         ) {
-            Text("다른 메뉴를 먹었어요", fontSize = 12.sp, color = Palette.Body)
+            Text("다른 메뉴를 먹었어요", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Palette.Primary)
+        }
         }
     }
 }
 
+@Composable
+private fun MealBadge(text: String, background: Color, foreground: Color) {
+    Surface(color = background, shape = RoundedCornerShape(10.dp)) {
+        Text(text, Modifier.padding(horizontal = 9.dp, vertical = 5.dp), fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = foreground, maxLines = 1, overflow = TextOverflow.Ellipsis)
+    }
+}
 
+@Composable
+private fun SourceBadge(source: SourceType) {
+    val homeCooked = source == SourceType.HOME_COOKED
+    MealBadge(if (homeCooked) "집밥" else "배달·외식", if (homeCooked) Palette.Mint else Palette.Peach, if (homeCooked) Palette.MintInk else Color(0xFF9A5135))
+}
+
+/** Generic decoration only; recommendation text remains the source of menu truth. */
+@Composable
+private fun HeroSaladIllustration(modifier: Modifier) {
+    Image(
+        painter = painterResource(R.drawable.hero_salad),
+        contentDescription = "장식용 샐러드 일러스트",
+        contentScale = ContentScale.Fit,
+        modifier = modifier
+    )
+}
 
 /** 홈 화면에서만 직접 기록하며, 추천 식사와 동일한 끼니 중복 등록을 막는다. */
 @Composable

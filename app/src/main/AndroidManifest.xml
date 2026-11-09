@@ -4,8 +4,8 @@
     <application
         android:allowBackup="false"
         android:label="헬싯"
-        android:icon="@drawable/ic_launcher"
-        android:roundIcon="@drawable/ic_launcher"
+        android:icon="@drawable/healtheat_logo"
+        android:roundIcon="@drawable/healtheat_logo"
         android:supportsRtl="true"
         android:theme="@style/Theme.Healtheat">
         <activity
